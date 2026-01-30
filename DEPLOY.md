@@ -29,7 +29,6 @@ This project deploys two CDK stacks:
 Infrastructure for secure GitHub Actions deployments using OIDC authentication.
 
 **Resources**:
-
 - OIDC identity provider for GitHub Actions
 - IAM role with restricted trust policy (only `dnafication/worthwatch-backend` repo, `main` branch)
 - Minimal permissions leveraging CDK bootstrap roles
@@ -43,7 +42,6 @@ Infrastructure for secure GitHub Actions deployments using OIDC authentication.
 Main application infrastructure including API Gateway, Lambda, and DynamoDB.
 
 **Resources**:
-
 - HTTP API Gateway with CORS and logging
 - Lambda function (Node.js 24.x runtime)
 - DynamoDB table (on-demand billing)
@@ -78,7 +76,6 @@ npx cdk bootstrap
 ```
 
 This creates the necessary staging resources for CDK deployments, including:
-
 - S3 bucket for CDK assets
 - ECR repository for container images
 - IAM roles (DeploymentActionRole, CloudFormationExecutionRole, etc.)
@@ -95,7 +92,6 @@ npm run synth
 ```
 
 This generates CloudFormation templates in `cdk.out/` directory:
-
 - `WorthwatchGithubActionsRoleStack.template.json`
 - `WorthWatchStack.template.json`
 
@@ -203,7 +199,6 @@ npx cdk deploy WorthwatchGithubActionsRoleStack
 ```
 
 This creates:
-
 - GitHub OIDC provider in AWS IAM (if not already present)
 - IAM role: `WorthwatchGithubActionsDeployRole`
 - Trust policy restricting to `dnafication/worthwatch-backend` repo, `main` branch
@@ -238,12 +233,12 @@ This ensures production deployments require manual approval.
 
 Add the following secrets to **both** `dev` and `prod` environments:
 
-| Secret Name           | Example Value                                                      | Description                    |
-| --------------------- | ------------------------------------------------------------------ | ------------------------------ |
-| `AWS_ROLE_ARN`        | `arn:aws:iam::123456789012:role/WorthwatchGithubActionsDeployRole` | IAM role ARN from Step 2       |
-| `AWS_REGION`          | `us-east-1`                                                        | AWS region for deployment      |
-| `CDK_DEFAULT_ACCOUNT` | `123456789012`                                                     | (Optional) Your AWS account ID |
-| `CDK_DEFAULT_REGION`  | `us-east-1`                                                        | (Optional) Default CDK region  |
+| Secret Name | Example Value | Description |
+|-------------|---------------|-------------|
+| `AWS_ROLE_ARN` | `arn:aws:iam::123456789012:role/WorthwatchGithubActionsDeployRole` | IAM role ARN from Step 2 |
+| `AWS_REGION` | `us-east-1` | AWS region for deployment |
+| `CDK_DEFAULT_ACCOUNT` | `123456789012` | (Optional) Your AWS account ID |
+| `CDK_DEFAULT_REGION` | `us-east-1` | (Optional) Default CDK region |
 
 **To add environment secrets**:
 
@@ -265,7 +260,6 @@ git push origin main
 ```
 
 **Deployment flow**:
-
 - **Dev environment**: Deploys automatically (no approval required)
 - **Prod environment**: Waits for manual approval if protection rules are configured
 
@@ -291,7 +285,6 @@ The GitHub Actions workflow (`.github/workflows/deploy.yml`):
 **Security Features**:
 
 The IAM role trust policy restricts authentication to:
-
 - **Repository**: `dnafication/worthwatch-backend` only
 - **Branch**: `main` branch only
 - **Authentication Method**: GitHub OIDC only (no long-lived credentials)
@@ -303,7 +296,6 @@ This ensures only authorized workflows from your repository can deploy.
 The deployment uses a layered permissions model following AWS best practices:
 
 **Layer 1: GitHub Actions Role**
-
 - Minimal permissions to trigger deployments
 - Can assume CDK DeploymentActionRole
 - Can call CloudFormation APIs
@@ -312,13 +304,11 @@ The deployment uses a layered permissions model following AWS best practices:
 - Can pass CloudFormationExecutionRole
 
 **Layer 2: CDK DeploymentActionRole** (Created during bootstrap)
-
 - Orchestrates CDK deployments
 - Manages CloudFormation stacks
 - Uploads assets to S3/ECR
 
 **Layer 3: CloudFormationExecutionRole** (Created during bootstrap)
-
 - Actually creates AWS resources
 - Has permissions for Lambda, DynamoDB, API Gateway, etc.
 - Used by CloudFormation service
@@ -328,13 +318,11 @@ This separation ensures the GitHub Actions role has minimal permissions, while t
 ### Monitoring Deployments
 
 **View workflow runs**:
-
 1. Go to **Actions** tab in GitHub
 2. Click on "CDK Deploy" workflow
 3. Select a specific run to view logs
 
 **View AWS CloudFormation events**:
-
 ```bash
 aws cloudformation describe-stack-events \
   --stack-name WorthWatchStack \
@@ -342,7 +330,6 @@ aws cloudformation describe-stack-events \
 ```
 
 **View stack outputs**:
-
 ```bash
 aws cloudformation describe-stacks \
   --stack-name WorthWatchStack \
@@ -353,18 +340,16 @@ aws cloudformation describe-stacks \
 
 ### CDK Bootstrap Issues
 
-**Error: "SSM parameter /cdk-bootstrap/\*/version not found"**
+**Error: "SSM parameter /cdk-bootstrap/*/version not found"**
 
 **Solution**: Your AWS environment hasn't been bootstrapped yet:
-
 ```bash
 npx cdk bootstrap aws://ACCOUNT-ID/REGION
 ```
 
-**Error: "Cannot find bucket cdk-_-assets-_"**
+**Error: "Cannot find bucket cdk-*-assets-*"**
 
 **Solution**: CDK bootstrap assets bucket is missing. Re-run bootstrap:
-
 ```bash
 npx cdk bootstrap --force
 ```
@@ -374,13 +359,11 @@ npx cdk bootstrap --force
 **Error: "not authorized to perform: sts:AssumeRole"**
 
 **Possible causes**:
-
 1. Role ARN in GitHub secrets doesn't match the deployed role
 2. Workflow is running from a different branch (not `main`)
 3. OIDC provider doesn't exist in AWS IAM
 
 **Solutions**:
-
 ```bash
 # Verify role exists
 aws iam get-role --role-name WorthwatchGithubActionsDeployRole
@@ -396,7 +379,6 @@ aws iam get-role --role-name WorthwatchGithubActionsDeployRole \
 **Error: "User is not authorized to perform: cloudformation:CreateChangeSet"**
 
 **Solution**: The GitHub Actions role might be missing permissions. Check the role's policies:
-
 ```bash
 aws iam list-attached-role-policies \
   --role-name WorthwatchGithubActionsDeployRole
@@ -414,7 +396,6 @@ aws iam list-role-policies \
 **Error: "Resource already exists"**
 
 **Solution**: A resource with the same name exists. Either:
-
 1. Delete the conflicting resource manually
 2. Import it into CDK (advanced)
 3. Change the resource name in your CDK code
@@ -422,7 +403,6 @@ aws iam list-role-policies \
 **Error: "Rate exceeded" from AWS APIs**
 
 **Solution**: AWS API throttling. Wait a few minutes and retry:
-
 ```bash
 npx cdk deploy --all
 ```
@@ -430,7 +410,6 @@ npx cdk deploy --all
 **Error: "Insufficient permissions"**
 
 **Solution**: Your AWS credentials lack required permissions. Ensure you have:
-
 - CloudFormation permissions
 - Permissions for all resources being created (Lambda, DynamoDB, API Gateway, etc.)
 - IAM permissions if creating roles
@@ -440,21 +419,17 @@ npx cdk deploy --all
 **API returns 403 or 500 errors**
 
 **Solutions**:
-
 1. Check Lambda function logs:
-
 ```bash
 aws logs tail /aws/lambda/WorthWatchStack-ApiLambdaDynamoDBLambdaFunction* --follow
 ```
 
 2. Verify DynamoDB table exists:
-
 ```bash
 aws dynamodb list-tables
 ```
 
 3. Check API Gateway logs:
-
 ```bash
 aws logs tail /aws/apigateway/worthwatch-api --follow
 ```
@@ -462,7 +437,6 @@ aws logs tail /aws/apigateway/worthwatch-api --follow
 **Lambda function timeout**
 
 **Solution**: Increase timeout in `lib/worthwatch-stack.ts`:
-
 ```typescript
 lambdaFunctionProps: {
   timeout: cdk.Duration.seconds(30), // Increase from default
@@ -475,13 +449,11 @@ lambdaFunctionProps: {
 If a deployment fails or causes issues, you can rollback:
 
 **Manual rollback via AWS Console**:
-
 1. Go to CloudFormation in AWS Console
 2. Select the stack
 3. Click "Stack actions" → "Roll back"
 
 **Redeploy previous version**:
-
 ```bash
 git checkout <previous-commit>
 npm run build
@@ -491,19 +463,16 @@ npx cdk deploy --all
 ### Getting Help
 
 **View CDK documentation**:
-
 ```bash
 npx cdk docs
 ```
 
 **View AWS CloudFormation stack events**:
-
 ```bash
 aws cloudformation describe-stack-events --stack-name WorthWatchStack
 ```
 
 **Enable CDK debug output**:
-
 ```bash
 npx cdk deploy --verbose --all
 ```

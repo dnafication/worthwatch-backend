@@ -41,15 +41,6 @@ For detailed deployment instructions, CI/CD setup, and troubleshooting, see **[D
 
 ### Basic Commands
 
-- `npm run build` - Compile TypeScript to JavaScript
-- `npm run watch` - Watch mode for TypeScript compilation
-- `npm run synth` - Synthesize CDK stack to CloudFormation
-- `npm run deploy` - Deploy stack to AWS
-- `npm run destroy` - Remove all AWS resources
-- `npm run cdk` - Run CDK CLI commands directly
-- `npm run format` - Format all code files with Prettier
-- `npm run format:check` - Check if files are formatted correctly
-
 ### Testing the API
 
 Once deployed, test the hello endpoint:
@@ -96,7 +87,6 @@ This project deploys two CDK stacks:
 Infrastructure for secure GitHub Actions deployments using OIDC authentication.
 
 **Resources**:
-
 - OIDC identity provider for GitHub Actions
 - IAM role with restricted trust policy (only `dnafication/worthwatch-backend` repo, `main` branch)
 - Minimal permissions leveraging CDK bootstrap roles
@@ -129,26 +119,6 @@ Main application infrastructure including API Gateway, Lambda, and DynamoDB.
 - **Backups**: Point-in-time recovery configurable
 
 ## Development
-
-### Code Formatting
-
-This project uses [Prettier](https://prettier.io/) for consistent code formatting. Before committing changes:
-
-```bash
-# Format all files
-npm run format
-
-# Check if files are properly formatted
-npm run format:check
-```
-
-Prettier is configured to format TypeScript, JavaScript, JSON, and Markdown files with the following rules:
-
-- Single quotes for strings
-- Semicolons required
-- 80 character line width
-- 2 spaces for indentation
-- Trailing commas in ES5-compatible locations
 
 ### Local Development
 
@@ -188,7 +158,6 @@ Confirm the deletion when prompted. Note: This will delete the DynamoDB table an
 ## Deployment
 
 For comprehensive deployment instructions including:
-
 - Manual deployment steps
 - CI/CD setup with GitHub Actions
 - Environment configuration
