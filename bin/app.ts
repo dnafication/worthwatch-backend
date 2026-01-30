@@ -4,7 +4,7 @@ import * as cdk from 'aws-cdk-lib';
 import { WorthWatchStack } from '../lib/worthwatch-stack';
 import { GithubActionsRoleStack } from '../lib/github-actions-role-stack';
 
-const app = new cdk.App()
+const app = new cdk.App();
 
 const env = {
   account: process.env.CDK_DEFAULT_ACCOUNT,
@@ -27,4 +27,4 @@ new WorthWatchStack(app, 'WorthWatchStack', {
   description: 'WorthWatch backend infrastructure',
 });
 
-app.synth()
+app.synth();

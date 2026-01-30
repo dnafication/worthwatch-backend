@@ -18,6 +18,7 @@ Implement tasks from an OpenSpec change.
    Always announce: "Using change: <name>" and how to override (e.g., `/opsx:apply <other>`).
 
 2. **Check status to understand the schema**
+   gst
 
    ```bash
    openspec status --change "<name>" --json

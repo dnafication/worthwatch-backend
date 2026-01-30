@@ -87,6 +87,7 @@ This project deploys two CDK stacks:
 Infrastructure for secure GitHub Actions deployments using OIDC authentication.
 
 **Resources**:
+
 - OIDC identity provider for GitHub Actions
 - IAM role with restricted trust policy (only `dnafication/worthwatch-backend` repo, `main` branch)
 - Minimal permissions leveraging CDK bootstrap roles
@@ -158,6 +159,7 @@ Confirm the deletion when prompted. Note: This will delete the DynamoDB table an
 ## Deployment
 
 For comprehensive deployment instructions including:
+
 - Manual deployment steps
 - CI/CD setup with GitHub Actions
 - Environment configuration
