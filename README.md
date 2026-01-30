@@ -88,6 +88,8 @@ Expected response:
 - `npm run deploy` - Deploy stack to AWS
 - `npm run destroy` - Remove all AWS resources
 - `npm run cdk` - Run CDK CLI commands directly
+- `npm run format` - Format all code files with Prettier
+- `npm run format:check` - Check if files are formatted correctly
 
 ## Project Structure
 
@@ -136,6 +138,26 @@ npm run destroy
 Confirm the deletion when prompted. Note: This will delete the DynamoDB table and all data.
 
 ## Development
+
+### Code Formatting
+
+This project uses [Prettier](https://prettier.io/) for consistent code formatting. Before committing changes:
+
+```bash
+# Format all files
+npm run format
+
+# Check if files are properly formatted
+npm run format:check
+```
+
+Prettier is configured to format TypeScript, JavaScript, JSON, and Markdown files with the following rules:
+
+- Single quotes for strings
+- Semicolons required
+- 80 character line width
+- 2 spaces for indentation
+- Trailing commas in ES5-compatible locations
 
 ### Modifying Infrastructure
 
