@@ -1,0 +1,71 @@
+# GitHub Actions workflow for CI/CD of WorthWatch Backend
+#
+# This workflow builds and deploys the AWS CDK stack to AWS on push to the main branch.
+#
+# Required Repository Secrets:
+#   - AWS_ACCESS_KEY_ID: AWS access key with permissions to deploy CDK stack
+#   - AWS_SECRET_ACCESS_KEY: AWS secret access key
+#   - AWS_REGION: AWS region where resources will be deployed (e.g., us-east-1)
+#
+# Optional Secrets:
+#   - CDK_DEFAULT_ACCOUNT: AWS account ID (can be inferred from credentials)
+#   - CDK_DEFAULT_REGION: Default region for CDK (defaults to AWS_REGION if not set)
+
+name: CDK Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build project
+        run: npm run build
+      
+      - name: Install AWS CDK
+        run: npm install -g aws-cdk
+      
+      - name: Configure AWS credentials
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          CDK_DEFAULT_ACCOUNT: ${{ secrets.CDK_DEFAULT_ACCOUNT }}
+          CDK_DEFAULT_REGION: ${{ secrets.CDK_DEFAULT_REGION }}
+        run: |
+          echo "AWS credentials configured"
+          echo "Region: ${AWS_REGION:-not set}"
+      
+      - name: Synthesize CDK stack
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          CDK_DEFAULT_ACCOUNT: ${{ secrets.CDK_DEFAULT_ACCOUNT }}
+          CDK_DEFAULT_REGION: ${{ secrets.CDK_DEFAULT_REGION }}
+        run: cdk synth
+      
+      - name: Deploy CDK stack
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          CDK_DEFAULT_ACCOUNT: ${{ secrets.CDK_DEFAULT_ACCOUNT }}
+          CDK_DEFAULT_REGION: ${{ secrets.CDK_DEFAULT_REGION }}
+        run: cdk deploy --require-approval never --all
