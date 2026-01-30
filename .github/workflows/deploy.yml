@@ -1,15 +1,29 @@
 # GitHub Actions workflow for CI/CD of WorthWatch Backend
 #
 # This workflow builds and deploys the AWS CDK stack to AWS on push to the main branch.
+# It deploys to two environments:
+#   - dev: Automatically deploys without approval
+#   - prod: Requires manual approval via GitHub Environment protection rules
 #
-# Required Repository Secrets:
-#   - AWS_ACCESS_KEY_ID: AWS access key with permissions to deploy CDK stack
-#   - AWS_SECRET_ACCESS_KEY: AWS secret access key
-#   - AWS_REGION: AWS region where resources will be deployed (e.g., us-east-1)
+# Required Repository Secrets (per environment):
+#   Dev environment secrets:
+#     - AWS_ACCESS_KEY_ID: AWS access key for dev environment
+#     - AWS_SECRET_ACCESS_KEY: AWS secret access key for dev
+#     - AWS_REGION: AWS region for dev (e.g., us-east-1)
+#     - CDK_DEFAULT_ACCOUNT: (Optional) AWS account ID for dev
+#     - CDK_DEFAULT_REGION: (Optional) Default region for CDK in dev
 #
-# Optional Secrets:
-#   - CDK_DEFAULT_ACCOUNT: AWS account ID (can be inferred from credentials)
-#   - CDK_DEFAULT_REGION: Default region for CDK (defaults to AWS_REGION if not set)
+#   Prod environment secrets:
+#     - AWS_ACCESS_KEY_ID: AWS access key for prod environment
+#     - AWS_SECRET_ACCESS_KEY: AWS secret access key for prod
+#     - AWS_REGION: AWS region for prod (e.g., us-east-1)
+#     - CDK_DEFAULT_ACCOUNT: (Optional) AWS account ID for prod
+#     - CDK_DEFAULT_REGION: (Optional) Default region for CDK in prod
+#
+# Setup Instructions:
+#   1. Create 'dev' and 'prod' environments in repository settings
+#   2. Configure protection rules for 'prod' environment (require reviewers)
+#   3. Add environment-specific secrets to each environment
 
 name: CDK Deploy
 
@@ -19,8 +33,45 @@ on:
       - main
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build project
+        run: npm run build
+      
+      - name: Synthesize CDK stack
+        run: npx cdk synth
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cdk-build
+          path: |
+            dist/
+            cdk.out/
+            node_modules/
+          retention-days: 1
+  
+  deploy-dev:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: dev
     
     permissions:
       contents: read
@@ -42,14 +93,43 @@ jobs:
           node-version: '24.x'
           cache: 'npm'
       
-      - name: Install dependencies
-        run: npm ci
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: cdk-build
       
-      - name: Build project
-        run: npm run build
+      - name: Deploy to Dev
+        run: npx cdk deploy --require-approval never --all
+  
+  deploy-prod:
+    needs: deploy-dev
+    runs-on: ubuntu-latest
+    environment: prod
+    
+    permissions:
+      contents: read
+    
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      CDK_DEFAULT_ACCOUNT: ${{ secrets.CDK_DEFAULT_ACCOUNT }}
+      CDK_DEFAULT_REGION: ${{ secrets.CDK_DEFAULT_REGION }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-      - name: Synthesize CDK stack
-        run: npx cdk synth
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: 'npm'
       
-      - name: Deploy CDK stack
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: cdk-build
+      
+      - name: Deploy to Prod
         run: npx cdk deploy --require-approval never --all
