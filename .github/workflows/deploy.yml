@@ -5,17 +5,15 @@
 #   - dev: Automatically deploys without approval
 #   - prod: Requires manual approval via GitHub Environment protection rules
 #
-# Required Repository Secrets (per environment):
+# Required Repository Secrets (per environment, using GitHub OIDC):
 #   Dev environment secrets:
-#     - AWS_ACCESS_KEY_ID: AWS access key for dev environment
-#     - AWS_SECRET_ACCESS_KEY: AWS secret access key for dev
+#     - AWS_ROLE_ARN: IAM role to assume for dev deploys
 #     - AWS_REGION: AWS region for dev (e.g., us-east-1)
 #     - CDK_DEFAULT_ACCOUNT: (Optional) AWS account ID for dev
 #     - CDK_DEFAULT_REGION: (Optional) Default region for CDK in dev
 #
 #   Prod environment secrets:
-#     - AWS_ACCESS_KEY_ID: AWS access key for prod environment
-#     - AWS_SECRET_ACCESS_KEY: AWS secret access key for prod
+#     - AWS_ROLE_ARN: IAM role to assume for prod deploys
 #     - AWS_REGION: AWS region for prod (e.g., us-east-1)
 #     - CDK_DEFAULT_ACCOUNT: (Optional) AWS account ID for prod
 #     - CDK_DEFAULT_REGION: (Optional) Default region for CDK in prod
@@ -36,72 +34,84 @@ jobs:
   deploy-dev:
     runs-on: ubuntu-latest
     environment: dev
-    
+
     permissions:
       contents: read
-    
+      id-token: write
+
     env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_REGION: ${{ secrets.AWS_REGION }}
       CDK_DEFAULT_ACCOUNT: ${{ secrets.CDK_DEFAULT_ACCOUNT }}
       CDK_DEFAULT_REGION: ${{ secrets.CDK_DEFAULT_REGION }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24.x'
           cache: 'npm'
-      
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-session-name: worthwatch-dev-deploy
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Build project
         run: npm run build
-      
+
       - name: Synthesize CDK stack
         run: npx cdk synth
-      
+
       - name: Deploy to Dev
         run: npx cdk deploy --require-approval never --all
-  
+
   deploy-prod:
     needs: deploy-dev
     runs-on: ubuntu-latest
     environment: prod
-    
+
     permissions:
       contents: read
-    
+      id-token: write
+
     env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_REGION: ${{ secrets.AWS_REGION }}
       CDK_DEFAULT_ACCOUNT: ${{ secrets.CDK_DEFAULT_ACCOUNT }}
       CDK_DEFAULT_REGION: ${{ secrets.CDK_DEFAULT_REGION }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24.x'
           cache: 'npm'
-      
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-session-name: worthwatch-prod-deploy
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Build project
         run: npm run build
-      
+
       - name: Synthesize CDK stack
         run: npx cdk synth
-      
+
       - name: Deploy to Prod
         run: npx cdk deploy --require-approval never --all
