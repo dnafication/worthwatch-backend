@@ -17,7 +17,7 @@ export class WorthWatchStack extends cdk.Stack {
       lambdaFunctionProps: {
         runtime: lambda.Runtime.NODEJS_24_X,
         handler: 'index.handler',
-        code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
+        code: lambda.Code.fromAsset(path.join(__dirname, '../dist/lambda')),
         environment: {
           // TABLE_NAME will be automatically added by Solutions Construct
         }

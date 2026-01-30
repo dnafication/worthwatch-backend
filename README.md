@@ -8,7 +8,7 @@ The backend is implemented using:
 
 - **AWS CDK** - Infrastructure as Code for reproducible deployments
 - **API Gateway (HTTP APIs)** - Low-latency REST API entry point
-- **AWS Lambda** - Serverless compute with Node.js 20.x runtime
+- **AWS Lambda** - Serverless compute with Node.js 24.x runtime
 - **Amazon DynamoDB** - NoSQL database for scalable data storage
 - **TypeScript** - Type-safe development throughout the stack
 
@@ -114,7 +114,7 @@ Expected response:
 
 ### Lambda Function
 
-- **Runtime**: Node.js 20.x
+- **Runtime**: Node.js 24.x
 - **Handler**: Processes API Gateway proxy events
 - **Permissions**: Automatic DynamoDB access via Solutions Construct
 
