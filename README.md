@@ -11,6 +11,7 @@ The backend is implemented using:
 - **AWS Lambda** - Serverless compute with Node.js 24.x runtime
 - **Amazon DynamoDB** - NoSQL database for scalable data storage
 - **TypeScript** - Type-safe development throughout the stack
+- **GitHub Actions OIDC** - Secure, credential-free CI/CD deployments
 
 ## Prerequisites
 
@@ -20,51 +21,27 @@ The backend is implemented using:
 
 ## Getting Started
 
-### 1. Install Dependencies
+### Quick Start
 
 ```bash
+# Install dependencies
 npm install
-```
 
-### 2. Build the Project
-
-Compile TypeScript code:
-
-```bash
+# Build the project
 npm run build
-```
 
-### 3. Bootstrap CDK (First Time Only)
-
-If this is your first time using CDK in your AWS account/region:
-
-```bash
+# Bootstrap CDK (first time only)
 npx cdk bootstrap
+
+# Deploy to AWS
+npx cdk deploy --all
 ```
 
-This creates the necessary staging resources for CDK deployments.
+For detailed deployment instructions, CI/CD setup, and troubleshooting, see **[DEPLOY.md](./DEPLOY.md)**.
 
-### 4. Synthesize CloudFormation Template
+### Basic Commands
 
-Preview the infrastructure that will be created:
-
-```bash
-npm run synth
-```
-
-The generated CloudFormation template will be in `cdk.out/WorthWatchStack.template.json`.
-
-### 5. Deploy to AWS
-
-Deploy the stack to your AWS account:
-
-```bash
-npm run deploy
-```
-
-After deployment completes, note the API Gateway URL in the outputs.
-
-## Testing the API
+### Testing the API
 
 Once deployed, test the hello endpoint:
 
@@ -80,29 +57,45 @@ Expected response:
 }
 ```
 
-## Available Scripts
-
-- `npm run build` - Compile TypeScript to JavaScript
-- `npm run watch` - Watch mode for TypeScript compilation
-- `npm run synth` - Synthesize CDK stack to CloudFormation
-- `npm run deploy` - Deploy stack to AWS
-- `npm run destroy` - Remove all AWS resources
-- `npm run cdk` - Run CDK CLI commands directly
-
 ## Project Structure
 
 ```
 .
 ├── bin/
-│   └── app.ts              # CDK app entry point
+│   └── app.ts                        # CDK app entry point
 ├── lib/
-│   └── worthwatch-stack.ts # Infrastructure definitions
+│   ├── worthwatch-stack.ts           # Main application infrastructure
+│   └── github-actions-role-stack.ts  # GitHub Actions OIDC role
 ├── lambda/
-│   └── index.ts            # Lambda handler code
-├── cdk.json                # CDK configuration
-├── tsconfig.json           # TypeScript configuration
-└── package.json            # Dependencies and scripts
+│   └── index.ts                      # Lambda handler code
+├── .github/
+│   └── workflows/
+│       └── deploy.yml                # CI/CD deployment workflow
+├── DEPLOY.md                         # Deployment and CI/CD guide
+├── README.md                         # Project overview (this file)
+├── cdk.json                          # CDK configuration
+├── tsconfig.json                     # TypeScript configuration
+└── package.json                      # Dependencies and scripts
 ```
+
+## Stacks
+
+This project deploys two CDK stacks:
+
+### 1. WorthwatchGithubActionsRoleStack
+
+Infrastructure for secure GitHub Actions deployments using OIDC authentication.
+
+**Resources**:
+- OIDC identity provider for GitHub Actions
+- IAM role with restricted trust policy (only `dnafication/worthwatch-backend` repo, `main` branch)
+- Minimal permissions leveraging CDK bootstrap roles
+
+**Purpose**: Enables GitHub Actions to deploy infrastructure without long-lived AWS credentials.
+
+### 2. WorthWatchStack
+
+Main application infrastructure including API Gateway, Lambda, and DynamoDB.
 
 ## Infrastructure Details
 
@@ -125,17 +118,11 @@ Expected response:
 - **Encryption**: AWS managed keys
 - **Backups**: Point-in-time recovery configurable
 
-## Cleanup
-
-To remove all AWS resources and avoid charges:
-
-```bash
-npm run destroy
-```
-
-Confirm the deletion when prompted. Note: This will delete the DynamoDB table and all data.
-
 ## Development
+
+### Local Development
+
+For detailed deployment instructions, CI/CD setup, and troubleshooting, see **[DEPLOY.md](./DEPLOY.md)**.
 
 ### Modifying Infrastructure
 
@@ -150,19 +137,39 @@ Confirm the deletion when prompted. Note: This will delete the DynamoDB table an
 2. Run `npm run build` to compile
 3. Run `npm run deploy` to update the function
 
+## Cleanup
+
+To remove all AWS resources and avoid charges:
+
+```bash
+npm run destroy
+```
+
+Confirm the deletion when prompted. Note: This will delete the DynamoDB table and all data.
+
 ## Key Principles
 
 - **OpenAPI is the source of truth** - APIs are spec-driven (to be added in future work)
 - **Infrastructure as Code** - All resources defined in CDK
 - **Type Safety** - TypeScript throughout for compile-time safety
 - **Serverless** - Low-ops execution model with automatic scaling
+- **Secure CI/CD** - OIDC-based GitHub Actions deployment (no long-lived credentials)
+
+## Deployment
+
+For comprehensive deployment instructions including:
+- Manual deployment steps
+- CI/CD setup with GitHub Actions
+- Environment configuration
+- Troubleshooting guide
+
+See **[DEPLOY.md](./DEPLOY.md)**
 
 ## Next Steps
 
 - Integrate OpenAPI specifications for API contract validation
 - Add Amazon Cognito for authentication
 - Implement business logic endpoints (watchlists, curators, ratings)
-- Set up CI/CD pipeline for automated deployments
 
 ## License
 
