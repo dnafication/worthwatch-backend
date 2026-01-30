@@ -10,7 +10,9 @@
     "synth": "cdk synth",
     "deploy": "cdk deploy",
     "destroy": "cdk destroy",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write \"**/*.{ts,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,json,md}\""
   },
   "keywords": [],
   "author": "",
@@ -26,6 +28,7 @@
     "@types/aws-lambda": "^8.10.160",
     "@types/node": "^25.1.0",
     "aws-cdk": "^2.1104.0",
+    "prettier": "^3.8.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
