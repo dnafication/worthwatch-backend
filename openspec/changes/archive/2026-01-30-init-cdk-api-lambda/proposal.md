@@ -14,12 +14,14 @@ WorthWatch needs foundational infrastructure to serve its spec-driven REST APIs.
 ## Capabilities
 
 ### New Capabilities
+
 - `cdk-infrastructure`: CDK project setup, configuration, and deployment scripts
 - `api-gateway-integration`: HTTP API Gateway resource with Lambda proxy integration
 - `lambda-compute`: Lambda function configuration and execution runtime
 - `dynamodb-storage`: DynamoDB table provisioning using aws-lambda-dynamodb construct
 
 ### Modified Capabilities
+
 <!-- No existing capabilities to modify - this is a greenfield initialization -->
 
 ## Impact

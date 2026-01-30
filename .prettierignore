@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+cdk.out/
+.cdk.staging/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# CDK
+cdk.context.json
+
+# Git
+.git/
