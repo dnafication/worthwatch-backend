@@ -19,7 +19,7 @@ export class WorthWatchStack extends cdk.Stack {
         handler: 'index.handler',
         code: lambda.Code.fromAsset(path.join(__dirname, '../dist/lambda')),
         environment: {
-          // TABLE_NAME will be automatically added by Solutions Construct
+          // DDB_TABLE_NAME will be automatically added by Solutions Construct
         }
       },
       dynamoTableProps: {
