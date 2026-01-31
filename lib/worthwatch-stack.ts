@@ -16,8 +16,8 @@ export class WorthWatchStack extends cdk.Stack {
     const lambdaToDynamoDB = new LambdaToDynamoDB(this, 'ApiLambdaDynamoDB', {
       lambdaFunctionProps: {
         runtime: lambda.Runtime.NODEJS_24_X,
-        handler: 'index.handler',
-        code: lambda.Code.fromAsset(path.join(__dirname, '../dist/lambda')),
+        handler: 'dist/lambda/index.handler',
+        code: lambda.Code.fromAsset(path.join(__dirname, '..')),
         environment: {
           // DDB_TABLE_NAME will be automatically added by Solutions Construct
         },
