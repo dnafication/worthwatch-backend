@@ -28,7 +28,7 @@ export interface GithubActionsRoleStackProps extends cdk.StackProps {
  *
  * This stack provisions:
  * - IAM role that GitHub Actions can assume via OIDC (OIDC provider is pre-created)
- * - IAM role that GitHub Actions can assume via OIDC
+
  * - Minimal permissions leveraging CDK bootstrap roles
  *
  * The role follows AWS CDK best practices by granting permission to assume
@@ -85,8 +85,8 @@ export class GithubActionsRoleStack extends cdk.Stack {
     // Build trust policy conditions
     const allowedSubs = githubRef
       ? [
+          // When a specific branch/ref is provided, restrict assumption to that ref only
           `repo:${githubOrg}/${githubRepo}:ref:refs/heads/${githubRef}`,
-          `repo:${githubOrg}/${githubRepo}:environment:*`,
         ]
       : [`repo:${githubOrg}/${githubRepo}:*`];
 
