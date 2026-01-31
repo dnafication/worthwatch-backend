@@ -11,7 +11,6 @@ The backend is implemented using:
 - **AWS Lambda** - Serverless compute with Node.js 24.x runtime
 - **Amazon DynamoDB** - NoSQL database for scalable data storage
 - **TypeScript** - Type-safe development throughout the stack
-- **GitHub Actions OIDC** - Secure, credential-free CI/CD deployments
 
 ## Prerequisites
 
@@ -65,7 +64,6 @@ Expected response:
 │   └── app.ts                        # CDK app entry point
 ├── lib/
 │   ├── worthwatch-stack.ts           # Main application infrastructure
-│   └── github-actions-role-stack.ts  # GitHub Actions OIDC role
 ├── contracts/                        # 📦 Shareable API contracts package
 │   ├── index.ts                      # Main exports
 │   ├── package.json                  # Contracts package config
@@ -94,22 +92,9 @@ Expected response:
 
 ## Stacks
 
-This project deploys two CDK stacks:
+This project deploys one CDK stack:
 
-### 1. WorthwatchGithubActionsRoleStack
-
-Infrastructure for secure GitHub Actions deployments using OIDC authentication.
-**Note**: The GitHub OIDC provider has already been created manually in IAM.
-
-**Resources**:
-
-- OIDC identity provider for GitHub Actions
-- IAM role with restricted trust policy (only `dnafication/worthwatch-backend` repo, `main` branch)
-- Minimal permissions leveraging CDK bootstrap roles
-
-**Purpose**: Enables GitHub Actions to deploy infrastructure without long-lived AWS credentials.
-
-### 2. WorthWatchStack
+### 1. WorthWatchStack
 
 Main application infrastructure including API Gateway, Lambda, and DynamoDB.
 
@@ -194,7 +179,7 @@ Confirm the deletion when prompted. Note: This will delete the DynamoDB table an
 - **Infrastructure as Code** - All resources defined in CDK
 - **Type Safety** - TypeScript throughout for compile-time safety
 - **Serverless** - Low-ops execution model with automatic scaling
-- **Secure CI/CD** - OIDC-based GitHub Actions deployment (no long-lived credentials)
+- **Secure CI/CD** - Uses AWS credentials configured in your environment
 
 ## Deployment
 

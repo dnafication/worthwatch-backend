@@ -5,15 +5,17 @@
 #   - dev: Automatically deploys without approval
 #   - prod: Requires manual approval via GitHub Environment protection rules
 #
-# Required Repository Secrets (per environment, using GitHub OIDC):
+# Required Repository Secrets (per environment):
 #   Dev environment secrets:
-#     - AWS_ROLE_ARN: IAM role to assume for dev deploys
+#     - AWS_ACCESS_KEY_ID: IAM access key for dev deploys
+#     - AWS_SECRET_ACCESS_KEY: IAM secret key for dev deploys
 #     - AWS_REGION: AWS region for dev (e.g., us-east-1)
 #     - CDK_DEFAULT_ACCOUNT: (Optional) AWS account ID for dev
 #     - CDK_DEFAULT_REGION: (Optional) Default region for CDK in dev
 #
 #   Prod environment secrets:
-#     - AWS_ROLE_ARN: IAM role to assume for prod deploys
+#     - AWS_ACCESS_KEY_ID: IAM access key for prod deploys
+#     - AWS_SECRET_ACCESS_KEY: IAM secret key for prod deploys
 #     - AWS_REGION: AWS region for prod (e.g., us-east-1)
 #     - CDK_DEFAULT_ACCOUNT: (Optional) AWS account ID for prod
 #     - CDK_DEFAULT_REGION: (Optional) Default region for CDK in prod
@@ -37,7 +39,6 @@ jobs:
 
     permissions:
       contents: read
-      id-token: write
 
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -54,12 +55,12 @@ jobs:
           node-version: '24.x'
           cache: 'npm'
 
-      - name: Configure AWS credentials (OIDC)
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-session-name: worthwatch-dev-deploy
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Install dependencies
         run: npm ci
@@ -80,7 +81,6 @@ jobs:
 
   #   permissions:
   #     contents: read
-  #     id-token: write
 
   #   env:
   #     AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -97,12 +97,12 @@ jobs:
   #         node-version: '24.x'
   #         cache: 'npm'
 
-  #     - name: Configure AWS credentials (OIDC)
+  #     - name: Configure AWS credentials
   #       uses: aws-actions/configure-aws-credentials@v4
   #       with:
-  #         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
   #         aws-region: ${{ secrets.AWS_REGION }}
-  #         role-session-name: worthwatch-prod-deploy
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   #     - name: Install dependencies
   #       run: npm ci

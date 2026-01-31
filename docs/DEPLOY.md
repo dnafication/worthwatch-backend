@@ -22,23 +22,9 @@ Before deploying, ensure you have:
 
 ## CDK Stacks Overview
 
-This project deploys two CDK stacks:
+This project deploys one CDK stack:
 
-### 1. WorthwatchGithubActionsRoleStack
-
-Infrastructure for secure GitHub Actions deployments using OIDC authentication.
-
-**Resources**:
-
-- OIDC identity provider for GitHub Actions
-- IAM role with restricted trust policy (only `dnafication/worthwatch-backend` repo, `main` branch)
-- Minimal permissions leveraging CDK bootstrap roles
-
-**Purpose**: Enables GitHub Actions to deploy infrastructure without long-lived AWS credentials.
-
-**When to deploy**: Once per AWS account, before setting up CI/CD automation.
-
-### 2. WorthWatchStack
+### 1. WorthWatchStack
 
 Main application infrastructure including API Gateway, Lambda, and DynamoDB.
 
@@ -96,31 +82,11 @@ npm run synth
 
 This generates CloudFormation templates in `cdk.out/` directory:
 
-- `WorthwatchGithubActionsRoleStack.template.json`
 - `WorthWatchStack.template.json`
 
 Review these templates to understand what resources will be created.
 
 ## Manual Deployment
-
-### Deploy GitHub Actions Role Stack (One-Time Setup)
-
-Before setting up CI/CD, deploy the IAM role for GitHub Actions:
-
-```bash
-npx cdk deploy WorthwatchGithubActionsRoleStack
-```
-
-After deployment, retrieve the role ARN:
-
-```bash
-aws cloudformation describe-stacks \
-  --stack-name WorthwatchGithubActionsRoleStack \
-  --query "Stacks[0].Outputs[?OutputKey=='GitHubActionsRoleArn'].OutputValue" \
-  --output text
-```
-
-Save this ARN - you'll need it for GitHub Actions configuration.
 
 ### Deploy Application Stack
 
@@ -133,16 +99,6 @@ npx cdk deploy WorthWatchStack
 ```
 
 After deployment completes, note the API Gateway URL in the outputs.
-
-### Deploy All Stacks at Once
-
-To deploy both stacks together:
-
-```bash
-npx cdk deploy --all
-```
-
-Use `--require-approval never` to skip approval prompts (useful for automation).
 
 ### Verify Deployment
 
@@ -181,47 +137,11 @@ Confirm the deletion when prompted. **Warning**: This will delete the DynamoDB t
 
 ## CI/CD with GitHub Actions
 
-This project includes automated deployment via GitHub Actions using OIDC authentication (no long-lived credentials required).
-
-### Architecture
-
-The GitHub Actions workflow uses a secure, credential-free deployment model:
-
-1. **OIDC Authentication**: GitHub Actions authenticates to AWS using OIDC tokens (no secrets)
-2. **IAM Role Assumption**: Workflow assumes the `WorthwatchGithubActionsDeployRole`
-3. **CDK Bootstrap Roles**: The role triggers CDK, which uses pre-provisioned bootstrap roles
-4. **Resource Creation**: CloudFormationExecutionRole creates actual AWS resources
+This project includes automated deployment via GitHub Actions using AWS access keys stored as secrets.
 
 ### Setup Instructions
 
-#### Step 1: Deploy the GitHub Actions Role Stack
-
-First, deploy the `WorthwatchGithubActionsRoleStack` to create the OIDC provider and IAM role:
-
-```bash
-npx cdk deploy WorthwatchGithubActionsRoleStack
-```
-
-This creates:
-
-- GitHub OIDC provider in AWS IAM (if not already present)
-- IAM role: `WorthwatchGithubActionsDeployRole`
-- Trust policy restricting to `dnafication/worthwatch-backend` repo, `main` branch
-
-#### Step 2: Retrieve the Role ARN
-
-Get the role ARN from the stack outputs:
-
-```bash
-aws cloudformation describe-stacks \
-  --stack-name WorthwatchGithubActionsRoleStack \
-  --query "Stacks[0].Outputs[?OutputKey=='GitHubActionsRoleArn'].OutputValue" \
-  --output text
-```
-
-Example output: `arn:aws:iam::123456789012:role/WorthwatchGithubActionsDeployRole`
-
-#### Step 3: Configure GitHub Environments
+#### Step 1: Configure GitHub Environments
 
 In your GitHub repository settings:
 
@@ -234,16 +154,18 @@ In your GitHub repository settings:
 
 This ensures production deployments require manual approval.
 
-#### Step 4: Configure GitHub Secrets
+#### Step 2: Configure GitHub Secrets
 
 Add the following secrets to **both** `dev` and `prod` environments:
 
-| Secret Name           | Example Value                                                      | Description                    |
-| --------------------- | ------------------------------------------------------------------ | ------------------------------ |
-| `AWS_ROLE_ARN`        | `arn:aws:iam::123456789012:role/WorthwatchGithubActionsDeployRole` | IAM role ARN from Step 2       |
-| `AWS_REGION`          | `us-east-1`                                                        | AWS region for deployment      |
-| `CDK_DEFAULT_ACCOUNT` | `123456789012`                                                     | (Optional) Your AWS account ID |
-| `CDK_DEFAULT_REGION`  | `us-east-1`                                                        | (Optional) Default CDK region  |
+| Secret Name             | Example Value         | Description                    |
+| ----------------------- | --------------------- | ------------------------------ |
+| `AWS_ACCESS_KEY_ID`     | `AKIA...`             | AWS access key ID              |
+| `AWS_SECRET_ACCESS_KEY` | `********`            | AWS secret access key          |
+| `AWS_SESSION_TOKEN`     | `IQoJb3JpZ2luX2Vj...` | Optional session token         |
+| `AWS_REGION`            | `us-east-1`           | AWS region for deployment      |
+| `CDK_DEFAULT_ACCOUNT`   | `123456789012`        | (Optional) Your AWS account ID |
+| `CDK_DEFAULT_REGION`    | `us-east-1`           | (Optional) Default CDK region  |
 
 **To add environment secrets**:
 
@@ -254,7 +176,7 @@ Add the following secrets to **both** `dev` and `prod` environments:
 
 Repeat for all required secrets in both environments.
 
-#### Step 5: Trigger Deployment
+#### Step 3: Trigger Deployment
 
 The workflow automatically deploys when you push to the `main` branch:
 
@@ -282,48 +204,11 @@ The GitHub Actions workflow (`.github/workflows/deploy.yml`):
 
 1. **Checkout**: Pulls the latest code from the repository
 2. **Setup Node.js**: Installs Node.js 24.x with npm caching
-3. **Configure AWS Credentials**: Uses OIDC to authenticate (no credentials stored)
+3. **Configure AWS Credentials**: Uses access keys from GitHub secrets
 4. **Install Dependencies**: Runs `npm ci` to install packages
 5. **Build Project**: Compiles TypeScript code
 6. **Synthesize**: Generates CloudFormation templates
-7. **Deploy**: Runs `cdk deploy --all` to deploy both stacks
-
-**Security Features**:
-
-The IAM role trust policy restricts authentication to:
-
-- **Repository**: `dnafication/worthwatch-backend` only
-- **Branch**: `main` branch only
-- **Authentication Method**: GitHub OIDC only (no long-lived credentials)
-
-This ensures only authorized workflows from your repository can deploy.
-
-### Permissions Model
-
-The deployment uses a layered permissions model following AWS best practices:
-
-**Layer 1: GitHub Actions Role**
-
-- Minimal permissions to trigger deployments
-- Can assume CDK DeploymentActionRole
-- Can call CloudFormation APIs
-- Can read from S3 staging bucket
-- Can read SSM parameters
-- Can pass CloudFormationExecutionRole
-
-**Layer 2: CDK DeploymentActionRole** (Created during bootstrap)
-
-- Orchestrates CDK deployments
-- Manages CloudFormation stacks
-- Uploads assets to S3/ECR
-
-**Layer 3: CloudFormationExecutionRole** (Created during bootstrap)
-
-- Actually creates AWS resources
-- Has permissions for Lambda, DynamoDB, API Gateway, etc.
-- Used by CloudFormation service
-
-This separation ensures the GitHub Actions role has minimal permissions, while the powerful resource-creation permissions are isolated to the CloudFormation execution role.
+7. **Deploy**: Runs `cdk deploy --require-approval never WorthWatchStack`
 
 ### Monitoring Deployments
 
@@ -369,41 +254,20 @@ npx cdk bootstrap aws://ACCOUNT-ID/REGION
 npx cdk bootstrap --force
 ```
 
-### GitHub Actions Deployment Issues
+### CI/CD Credential Issues
 
-**Error: "not authorized to perform: sts:AssumeRole"**
+**Error: "The security token included in the request is invalid"**
 
 **Possible causes**:
 
-1. Role ARN in GitHub secrets doesn't match the deployed role
-2. Workflow is running from a different branch (not `main`)
-3. OIDC provider doesn't exist in AWS IAM
+1. `AWS_ACCESS_KEY_ID` or `AWS_SECRET_ACCESS_KEY` is incorrect
+2. The keys are inactive or deleted
+3. A session token is required but missing
 
 **Solutions**:
 
-```bash
-# Verify role exists
-aws iam get-role --role-name WorthwatchGithubActionsDeployRole
-
-# Verify OIDC provider exists
-aws iam list-open-id-connect-providers
-
-# Check role trust policy
-aws iam get-role --role-name WorthwatchGithubActionsDeployRole \
-  --query "Role.AssumeRolePolicyDocument"
-```
-
-**Error: "User is not authorized to perform: cloudformation:CreateChangeSet"**
-
-**Solution**: The GitHub Actions role might be missing permissions. Check the role's policies:
-
-```bash
-aws iam list-attached-role-policies \
-  --role-name WorthwatchGithubActionsDeployRole
-
-aws iam list-role-policies \
-  --role-name WorthwatchGithubActionsDeployRole
-```
+- Recreate the access keys in AWS IAM and update the GitHub secrets
+- If using temporary credentials, set `AWS_SESSION_TOKEN`
 
 **Error: "No changes to deploy"**
 
