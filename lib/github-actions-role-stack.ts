@@ -115,16 +115,12 @@ export class GithubActionsRoleStack extends cdk.Stack {
     // These permissions allow GitHub Actions to trigger CDK deployment,
     // which then uses the bootstrap roles to actually create resources
 
-    // 1. Permission to assume CDK bootstrap roles
+    // 1. Permission to assume CDK DeploymentActionRole
     this.role.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: ['sts:AssumeRole'],
-        resources: [
-          `arn:aws:iam::${this.account}:role/cdk-*-deploy-role-*`,
-          `arn:aws:iam::${this.account}:role/cdk-*-file-publishing-role-*`,
-          `arn:aws:iam::${this.account}:role/cdk-*-image-publishing-role-*`,
-        ],
+        resources: [`arn:aws:iam::${this.account}:role/cdk-*-deploy-role-*`],
       })
     );
 
@@ -145,18 +141,11 @@ export class GithubActionsRoleStack extends cdk.Stack {
       })
     );
 
-    // 3. S3 permissions for CDK staging bucket (read/write for asset uploads)
+    // 3. S3 read permissions for CDK staging bucket
     this.role.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
-        actions: [
-          's3:GetObject*',
-          's3:GetBucket*',
-          's3:List*',
-          's3:DeleteObject*',
-          's3:PutObject*',
-          's3:Abort*',
-        ],
+        actions: ['s3:GetObject', 's3:ListBucket'],
         resources: [
           `arn:aws:s3:::cdk-*-assets-${this.account}-${this.region}`,
           `arn:aws:s3:::cdk-*-assets-${this.account}-${this.region}/*`,
@@ -164,35 +153,7 @@ export class GithubActionsRoleStack extends cdk.Stack {
       })
     );
 
-    // 4. ECR permissions for Docker image publishing (CDK bootstrap)
-    this.role.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: [
-          'ecr:PutImage',
-          'ecr:InitiateLayerUpload',
-          'ecr:UploadLayerPart',
-          'ecr:CompleteLayerUpload',
-          'ecr:BatchCheckLayerAvailability',
-          'ecr:DescribeRepositories',
-          'ecr:DescribeImages',
-          'ecr:BatchGetImage',
-          'ecr:GetDownloadUrlForLayer',
-        ],
-        resources: [`arn:aws:ecr:${this.region}:${this.account}:repository/cdk-*`],
-      })
-    );
-
-    // 5. ECR authorization token (required for Docker login)
-    this.role.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ['ecr:GetAuthorizationToken'],
-        resources: ['*'],
-      })
-    );
-
-    // 6. SSM parameter read for CDK bootstrap version check
+    // 4. SSM parameter read for CDK bootstrap version check
     this.role.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
@@ -203,7 +164,7 @@ export class GithubActionsRoleStack extends cdk.Stack {
       })
     );
 
-    // 7. IAM PassRole for CloudFormation execution role
+    // 5. IAM PassRole for CloudFormation execution role
     this.role.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
