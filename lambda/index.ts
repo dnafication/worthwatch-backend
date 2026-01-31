@@ -22,17 +22,16 @@ export const handler = async (
 
   const parsedQuery = querySchema.safeParse(event.queryStringParameters ?? {});
   if (!parsedQuery.success) {
-    throw new Error('Validation error');
-    // return {
-    //   statusCode: 400,
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify({
-    //     error: 'Bad Request',
-    //     issues: parsedQuery.error.format(),
-    //   }),
-    // };
+    return {
+      statusCode: 400,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        error: 'Bad Request',
+        issues: parsedQuery.error.format(),
+      }),
+    };
   }
 
   return {
