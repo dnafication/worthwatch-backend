@@ -6,11 +6,51 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import { LambdaToDynamoDB } from '@aws-solutions-constructs/aws-lambda-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as path from 'path';
 
 export class WorthWatchStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    // Create Cognito User Pool for passwordless authentication
+    const userPool = new cognito.UserPool(this, 'WorthWatchUserPool', {
+      userPoolName: 'worthwatch-users',
+      selfSignUpEnabled: true,
+      signInAliases: {
+        email: true,
+        username: false,
+      },
+      autoVerify: {
+        email: true,
+      },
+      passwordPolicy: {
+        minLength: 8,
+        requireLowercase: false,
+        requireUppercase: false,
+        requireDigits: false,
+        requireSymbols: false,
+      },
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      removalPolicy: cdk.RemovalPolicy.DESTROY, // For development - change for production
+    });
+
+    // Create Cognito User Pool Client
+    const userPoolClient = userPool.addClient('WorthWatchWebClient', {
+      userPoolClientName: 'worthwatch-web-client',
+      authFlows: {
+        userPassword: true,
+        userSrp: true,
+        custom: true,
+      },
+      oAuth: {
+        flows: {
+          authorizationCodeGrant: false,
+          implicitCodeGrant: false,
+        },
+      },
+      generateSecret: false, // Public client (web/mobile apps)
+    });
 
     // Create Lambda and DynamoDB using Solutions Construct
     const lambdaToDynamoDB = new LambdaToDynamoDB(this, 'ApiLambdaDynamoDB', {
@@ -20,6 +60,9 @@ export class WorthWatchStack extends cdk.Stack {
         code: lambda.Code.fromAsset(path.join(__dirname, '../dist/lambda')),
         environment: {
           // DDB_TABLE_NAME will be automatically added by Solutions Construct
+          USER_POOL_ID: userPool.userPoolId,
+          USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
+          AWS_REGION: cdk.Stack.of(this).region,
         },
       },
       dynamoTableProps: {
@@ -110,6 +153,20 @@ export class WorthWatchStack extends cdk.Stack {
       value: lambdaToDynamoDB.dynamoTable.tableName,
       description: 'DynamoDB table name',
       exportName: 'WorthWatchTableName',
+    });
+
+    // Output the Cognito User Pool ID
+    new cdk.CfnOutput(this, 'UserPoolId', {
+      value: userPool.userPoolId,
+      description: 'Cognito User Pool ID',
+      exportName: 'WorthWatchUserPoolId',
+    });
+
+    // Output the Cognito User Pool Client ID
+    new cdk.CfnOutput(this, 'UserPoolClientId', {
+      value: userPoolClient.userPoolClientId,
+      description: 'Cognito User Pool Client ID',
+      exportName: 'WorthWatchUserPoolClientId',
     });
   }
 }

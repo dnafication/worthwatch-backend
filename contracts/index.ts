@@ -17,5 +17,6 @@
  * ```
  */
 
+export * from './health.contract';
 export * from './watchlists.contract';
 export * from './schemas/watchlist.schema';

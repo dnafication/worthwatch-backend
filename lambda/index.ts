@@ -5,6 +5,7 @@ import {
 } from 'aws-lambda';
 import { createLambdaHandler } from '@ts-rest/serverless/aws';
 import { apiContract, apiRoutes } from './router';
+import { verifyToken, isPublicRoute } from './middleware/auth.middleware';
 
 /**
  * ts-rest Lambda Handler
@@ -19,7 +20,7 @@ const tsRestHandler = createLambdaHandler(apiContract, apiRoutes, {
 
 /**
  * Main Lambda handler
- * Wraps ts-rest handler with logging and error handling
+ * Wraps ts-rest handler with authentication and error handling
  */
 export const handler = async (
   event: APIGatewayProxyEvent,
@@ -29,6 +30,35 @@ export const handler = async (
   console.log('Context:', JSON.stringify(context, null, 2));
 
   try {
+    const path = event.path || '/';
+    const method = event.httpMethod || 'GET';
+
+    // Check if route is public
+    if (!isPublicRoute(path, method)) {
+      // Protected route - verify JWT token
+      try {
+        const tokenPayload = await verifyToken(event);
+        console.log('Authenticated user:', tokenPayload.sub);
+
+        // Add user info to event for downstream handlers
+        (event as any).user = tokenPayload;
+      } catch (authError) {
+        console.error('Authentication error:', authError);
+        return {
+          statusCode: 401,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            error: 'Unauthorized',
+            message: authError instanceof Error ? authError.message : 'Authentication failed',
+          }),
+        };
+      }
+    } else {
+      console.log('Public route - skipping authentication');
+    }
+
     // Delegate to ts-rest handler
     const result = await tsRestHandler(event, context);
     return result as APIGatewayProxyResult;
