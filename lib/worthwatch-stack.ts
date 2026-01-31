@@ -132,6 +132,12 @@ export class WorthWatchStack extends cdk.Stack {
 
     // Add public routes (no authorization required)
     httpApi.addRoutes({
+      path: '/public',
+      methods: [apigatewayv2.HttpMethod.GET],
+      integration: lambdaIntegration,
+    });
+
+    httpApi.addRoutes({
       path: '/health',
       methods: [apigatewayv2.HttpMethod.GET],
       integration: lambdaIntegration,
@@ -162,6 +168,15 @@ export class WorthWatchStack extends cdk.Stack {
         payloadFormatVersion: '2.0',
       }
     );
+
+    // Protected route - /private endpoint
+    new apigatewayv2.CfnRoute(this, 'PrivateRoute', {
+      apiId: httpApi.apiId,
+      routeKey: 'GET /private',
+      target: `integrations/${protectedIntegration.ref}`,
+      authorizationType: 'JWT',
+      authorizerId: jwtAuthorizer.ref,
+    });
 
     // Protected route for watchlists collection
     new apigatewayv2.CfnRoute(this, 'WatchlistsRoute', {
