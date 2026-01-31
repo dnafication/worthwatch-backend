@@ -37,7 +37,7 @@ npx cdk bootstrap
 npx cdk deploy --all
 ```
 
-For detailed deployment instructions, CI/CD setup, and troubleshooting, see **[DEPLOY.md](./DEPLOY.md)**.
+For detailed deployment instructions, CI/CD setup, and troubleshooting, see **[docs/DEPLOY.md](docs/DEPLOY.md)**.
 
 ### Basic Commands
 
@@ -71,7 +71,8 @@ Expected response:
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml                # CI/CD deployment workflow
-├── DEPLOY.md                         # Deployment and CI/CD guide
+├── docs/
+│   └── DEPLOY.md                     # Deployment and CI/CD guide
 ├── README.md                         # Project overview (this file)
 ├── cdk.json                          # CDK configuration
 ├── tsconfig.json                     # TypeScript configuration
@@ -85,6 +86,7 @@ This project deploys two CDK stacks:
 ### 1. WorthwatchGithubActionsRoleStack
 
 Infrastructure for secure GitHub Actions deployments using OIDC authentication.
+**Note**: The GitHub OIDC provider has already been created manually in IAM.
 
 **Resources**:
 
@@ -123,7 +125,7 @@ Main application infrastructure including API Gateway, Lambda, and DynamoDB.
 
 ### Local Development
 
-For detailed deployment instructions, CI/CD setup, and troubleshooting, see **[DEPLOY.md](./DEPLOY.md)**.
+For detailed deployment instructions, CI/CD setup, and troubleshooting, see **[docs/DEPLOY.md](docs/DEPLOY.md)**.
 
 ### Modifying Infrastructure
 
@@ -165,7 +167,7 @@ For comprehensive deployment instructions including:
 - Environment configuration
 - Troubleshooting guide
 
-See **[DEPLOY.md](./DEPLOY.md)**
+See **[docs/DEPLOY.md](docs/DEPLOY.md)**
 
 ## Next Steps
 

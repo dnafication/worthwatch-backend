@@ -71,7 +71,7 @@ jobs:
         run: npx cdk synth
 
       - name: Deploy to Dev
-        run: npx cdk deploy --require-approval never --all
+        run: npx cdk deploy --require-approval never WorthWatchStack # Deploy only the backend stack
 
   # deploy-prod:
   #   needs: deploy-dev

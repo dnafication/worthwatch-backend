@@ -27,7 +27,7 @@ export interface GithubActionsRoleStackProps extends cdk.StackProps {
  * CDK Stack that creates IAM resources for GitHub Actions OIDC authentication.
  *
  * This stack provisions:
- * - OIDC identity provider for GitHub Actions (if not already present)
+ * - IAM role that GitHub Actions can assume via OIDC (OIDC provider is pre-created)
  * - IAM role that GitHub Actions can assume via OIDC
  * - Minimal permissions leveraging CDK bootstrap roles
  *
@@ -75,33 +75,27 @@ export class GithubActionsRoleStack extends cdk.Stack {
     const githubOidcUrl = 'token.actions.githubusercontent.com';
     const githubThumbprint = '6938fd4d98bab03faadb97b34396831e3780aea1';
 
-    // Try to use existing OIDC provider, or create new one
-    // Note: Only one GitHub OIDC provider per AWS account is needed
-    let oidcProvider: iam.IOpenIdConnectProvider;
-
-    try {
-      // Attempt to reference existing provider
-      oidcProvider = iam.OpenIdConnectProvider.fromOpenIdConnectProviderArn(
-        this,
-        'GithubOidcProvider',
-        `arn:aws:iam::${this.account}:oidc-provider/${githubOidcUrl}`
-      );
-    } catch {
-      // If not found, create new provider
-      oidcProvider = new iam.OpenIdConnectProvider(this, 'GithubOidcProvider', {
-        url: `https://${githubOidcUrl}`,
-        clientIds: ['sts.amazonaws.com'],
-        thumbprints: [githubThumbprint],
-      });
-    }
+    // Use existing OIDC provider (created manually in IAM)
+    const oidcProvider = iam.OpenIdConnectProvider.fromOpenIdConnectProviderArn(
+      this,
+      'GithubOidcProvider',
+      `arn:aws:iam::${this.account}:oidc-provider/${githubOidcUrl}`
+    );
 
     // Build trust policy conditions
+    const allowedSubs = githubRef
+      ? [
+          `repo:${githubOrg}/${githubRepo}:ref:refs/heads/${githubRef}`,
+          `repo:${githubOrg}/${githubRepo}:environment:*`,
+        ]
+      : [`repo:${githubOrg}/${githubRepo}:*`];
+
     const trustConditions: { [key: string]: any } = {
       StringEquals: {
         [`${githubOidcUrl}:aud`]: 'sts.amazonaws.com',
-        [`${githubOidcUrl}:sub`]: githubRef
-          ? `repo:${githubOrg}/${githubRepo}:ref:refs/heads/${githubRef}`
-          : `repo:${githubOrg}/${githubRepo}:*`,
+      },
+      StringLike: {
+        [`${githubOidcUrl}:sub`]: allowedSubs,
       },
     };
 
