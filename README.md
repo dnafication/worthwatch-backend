@@ -68,26 +68,13 @@ For authenticated endpoints, you'll need a valid JWT token from Cognito. See [do
 │   └── app.ts                        # CDK app entry point
 ├── lib/
 │   ├── worthwatch-stack.ts           # Main application infrastructure
-├── contracts/                        # 📦 Shareable API contracts package
-│   ├── index.ts                      # Main exports
-│   ├── package.json                  # Contracts package config
-│   ├── README.md                     # Contracts documentation
-│   ├── watchlists.contract.ts        # Watchlists API contract
-│   └── schemas/                      # Zod validation schemas
-│       ├── index.ts                  # Schema exports
-│       └── watchlist.schema.ts       # Watchlist validation
 ├── lambda/
-│   ├── index.ts                      # Lambda handler (ts-rest)
-│   ├── router.ts                     # Route aggregation
-│   ├── openapi.ts                    # OpenAPI generator
-│   └── routes/
-│       └── watchlists.routes.ts      # Watchlist handlers
+│   └── index.ts                      # Lambda handler
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml                # CI/CD deployment workflow
 ├── docs/
 │   └── DEPLOY.md                     # Deployment and CI/CD guide
-├── openapi.json                      # Generated OpenAPI spec
 ├── README.md                         # Project overview (this file)
 ├── cdk.json                          # CDK configuration
 ├── tsconfig.json                     # TypeScript configuration
@@ -135,7 +122,16 @@ Main application infrastructure including API Gateway, Lambda, and DynamoDB.
 
 ### Local Development
 
-For detailed deployment instructions, CI/CD setup, and troubleshooting, see **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+Run and test the API locally using AWS SAM CLI without deploying for every change.
+
+```bash
+# Quick start
+npm run dev
+```
+
+This starts a local API server on `http://localhost:3000` that connects to your deployed DynamoDB table.
+
+**For complete setup instructions, troubleshooting, and best practices, see [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md).**
 
 ### Modifying Infrastructure
 
@@ -146,34 +142,9 @@ For detailed deployment instructions, CI/CD setup, and troubleshooting, see **[d
 
 ### Modifying Lambda Code
 
-1. Edit `lambda/index.ts` or route handlers in `lambda/routes/`
+1. Edit `lambda/index.ts`
 2. Run `npm run build` to compile
 3. Run `npm run deploy` to update the function
-
-### Modifying API Contracts
-
-1. Edit contracts in `contracts/` or schemas in `contracts/schemas/`
-2. Run `npm run build` to compile
-3. Run `npm run openapi` to regenerate OpenAPI spec
-4. The entire `contracts/` directory is a self-contained shareable package
-
-**Sharing contracts with frontend:**
-```bash
-# In frontend project
-npm install ../worthwatch-backend/contracts
-```
-
-```typescript
-// Frontend usage
-import { initClient } from '@ts-rest/core';
-import { watchlistsContract } from '@worthwatch/contracts';
-
-const client = initClient(watchlistsContract, {
-  baseUrl: 'https://api.worthwatch.com'
-});
-
-const watchlists = await client.listWatchlists();
-```
 
 ## Cleanup
 
@@ -187,7 +158,6 @@ Confirm the deletion when prompted. Note: This will delete the DynamoDB table an
 
 ## Key Principles
 
-- **OpenAPI is the source of truth** - APIs are spec-driven (to be added in future work)
 - **Infrastructure as Code** - All resources defined in CDK
 - **Type Safety** - TypeScript throughout for compile-time safety
 - **Serverless** - Low-ops execution model with automatic scaling

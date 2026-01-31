@@ -5,6 +5,7 @@ import * as apigatewayv2Integrations from 'aws-cdk-lib/aws-apigatewayv2-integrat
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { LambdaToDynamoDB } from '@aws-solutions-constructs/aws-lambda-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction, SourceMapMode } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as path from 'path';
@@ -51,20 +52,22 @@ export class WorthWatchStack extends cdk.Stack {
       },
       generateSecret: false, // Public client (web/mobile apps)
     });
+    const nodejsLambda = new NodejsFunction(this, 'ApiLambda', {
+      runtime: lambda.Runtime.NODEJS_24_X,
+      handler: 'handler',
+      entry: path.join(__dirname, '..', 'lambda', 'index.ts'),
+      bundling: {
+        sourceMap: true,
+        sourceMapMode: SourceMapMode.INLINE,
+      },
+      environment: {
+        NODE_OPTIONS: '--enable-source-maps',
+      },
+    });
 
     // Create Lambda and DynamoDB using Solutions Construct
     const lambdaToDynamoDB = new LambdaToDynamoDB(this, 'ApiLambdaDynamoDB', {
-      lambdaFunctionProps: {
-        runtime: lambda.Runtime.NODEJS_24_X,
-        handler: 'index.handler',
-        code: lambda.Code.fromAsset(path.join(__dirname, '../dist/lambda')),
-        environment: {
-          // DDB_TABLE_NAME will be automatically added by Solutions Construct
-          USER_POOL_ID: userPool.userPoolId,
-          USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
-          AWS_REGION: cdk.Stack.of(this).region,
-        },
-      },
+      existingLambdaObj: nodejsLambda,
       dynamoTableProps: {
         partitionKey: {
           name: 'id',
@@ -84,16 +87,20 @@ export class WorthWatchStack extends cdk.Stack {
     });
 
     // Create JWT Authorizer for Cognito
-    const jwtAuthorizer = new apigatewayv2.CfnAuthorizer(this, 'JwtAuthorizer', {
-      apiId: '', // Will be set after API creation
-      authorizerType: 'JWT',
-      identitySource: ['$request.header.Authorization'],
-      name: 'CognitoJwtAuthorizer',
-      jwtConfiguration: {
-        audience: [userPoolClient.userPoolClientId],
-        issuer: `https://cognito-idp.${cdk.Stack.of(this).region}.amazonaws.com/${userPool.userPoolId}`,
-      },
-    });
+    const jwtAuthorizer = new apigatewayv2.CfnAuthorizer(
+      this,
+      'JwtAuthorizer',
+      {
+        apiId: '', // Will be set after API creation
+        authorizerType: 'JWT',
+        identitySource: ['$request.header.Authorization'],
+        name: 'CognitoJwtAuthorizer',
+        jwtConfiguration: {
+          audience: [userPoolClient.userPoolClientId],
+          issuer: `https://cognito-idp.${cdk.Stack.of(this).region}.amazonaws.com/${userPool.userPoolId}`,
+        },
+      }
+    );
 
     // Create HTTP API Gateway
     const httpApi = new apigatewayv2.HttpApi(this, 'WorthWatchHttpApi', {
@@ -145,12 +152,16 @@ export class WorthWatchStack extends cdk.Stack {
 
     // Create protected routes using L1 constructs with JWT authorizer
     // We need to create a separate integration and routes for protected paths
-    const protectedIntegration = new apigatewayv2.CfnIntegration(this, 'ProtectedIntegration', {
-      apiId: httpApi.apiId,
-      integrationType: 'AWS_PROXY',
-      integrationUri: lambdaToDynamoDB.lambdaFunction.functionArn,
-      payloadFormatVersion: '2.0',
-    });
+    const protectedIntegration = new apigatewayv2.CfnIntegration(
+      this,
+      'ProtectedIntegration',
+      {
+        apiId: httpApi.apiId,
+        integrationType: 'AWS_PROXY',
+        integrationUri: lambdaToDynamoDB.lambdaFunction.functionArn,
+        payloadFormatVersion: '2.0',
+      }
+    );
 
     // Protected route for watchlists collection
     new apigatewayv2.CfnRoute(this, 'WatchlistsRoute', {
