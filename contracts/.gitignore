@@ -1,9 +1,0 @@
-# Build output
-dist/
-*.tsbuildinfo
-
-# Dependencies (if contracts had its own node_modules)
-node_modules/
-
-# OS files
-.DS_Store

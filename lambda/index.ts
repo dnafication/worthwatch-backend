@@ -3,23 +3,15 @@ import {
   APIGatewayProxyResult,
   Context,
 } from 'aws-lambda';
-import { createLambdaHandler } from '@ts-rest/serverless/aws';
-import { apiContract, apiRoutes } from './router';
+import { z } from 'zod';
 
-/**
- * ts-rest Lambda Handler
- *
- * Uses @ts-rest/serverless to handle routing and validation.
- * Requests are validated against the contract and routed to appropriate handlers.
- */
-const tsRestHandler = createLambdaHandler(apiContract, apiRoutes, {
-  jsonQuery: true,
-  responseValidation: true,
+const querySchema = z.object({
+  name: z.string(),
 });
 
 /**
  * Main Lambda handler
- * Wraps ts-rest handler with logging and error handling
+ * Simple handler with Zod validation
  */
 export const handler = async (
   event: APIGatewayProxyEvent,
@@ -28,23 +20,31 @@ export const handler = async (
   console.log('Event:', JSON.stringify(event, null, 2));
   console.log('Context:', JSON.stringify(context, null, 2));
 
-  try {
-    // Delegate to ts-rest handler
-    const result = await tsRestHandler(event, context);
-    return result as APIGatewayProxyResult;
-  } catch (error) {
-    console.error('Error:', error);
-
-    // Fallback error response
-    return {
-      statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        error: 'Internal Server Error',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      }),
-    };
+  const parsedQuery = querySchema.safeParse(event.queryStringParameters ?? {});
+  if (!parsedQuery.success) {
+    throw new Error('Validation error');
+    // return {
+    //   statusCode: 400,
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({
+    //     error: 'Bad Request',
+    //     issues: parsedQuery.error.format(),
+    //   }),
+    // };
   }
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message: 'ok',
+      name: parsedQuery.data.name ?? null,
+      path: event.path,
+      method: event.httpMethod,
+    }),
+  };
 };

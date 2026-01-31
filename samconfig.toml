@@ -1,0 +1,14 @@
+# SAM CLI configuration for local development
+version = 0.1
+
+[default]
+[default.local_start_api]
+[default.local_start_api.parameters]
+template_file = "cdk.out/WorthWatchStack.template.json"
+docker_network = ""
+skip_pull_image = true
+parameter_overrides = ""
+
+[default.local_invoke]
+[default.local_invoke.parameters]
+template_file = "cdk.out/WorthWatchStack.template.json"

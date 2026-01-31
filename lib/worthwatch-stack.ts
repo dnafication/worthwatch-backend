@@ -5,6 +5,7 @@ import * as apigatewayv2Integrations from 'aws-cdk-lib/aws-apigatewayv2-integrat
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { LambdaToDynamoDB } from '@aws-solutions-constructs/aws-lambda-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction, SourceMapMode } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as path from 'path';
 
@@ -12,16 +13,22 @@ export class WorthWatchStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const nodejsLambda = new NodejsFunction(this, 'ApiLambda', {
+      runtime: lambda.Runtime.NODEJS_24_X,
+      handler: 'handler',
+      entry: path.join(__dirname, '..', 'lambda', 'index.ts'),
+      bundling: {
+        sourceMap: true,
+        sourceMapMode: SourceMapMode.INLINE,
+      },
+      environment: {
+        NODE_OPTIONS: '--enable-source-maps',
+      },
+    });
+
     // Create Lambda and DynamoDB using Solutions Construct
     const lambdaToDynamoDB = new LambdaToDynamoDB(this, 'ApiLambdaDynamoDB', {
-      lambdaFunctionProps: {
-        runtime: lambda.Runtime.NODEJS_24_X,
-        handler: 'dist/lambda/index.handler',
-        code: lambda.Code.fromAsset(path.join(__dirname, '..')),
-        environment: {
-          // DDB_TABLE_NAME will be automatically added by Solutions Construct
-        },
-      },
+      existingLambdaObj: nodejsLambda,
       dynamoTableProps: {
         partitionKey: {
           name: 'id',
