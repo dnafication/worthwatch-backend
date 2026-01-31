@@ -66,13 +66,26 @@ Expected response:
 ├── lib/
 │   ├── worthwatch-stack.ts           # Main application infrastructure
 │   └── github-actions-role-stack.ts  # GitHub Actions OIDC role
+├── contracts/                        # 📦 Shareable API contracts package
+│   ├── index.ts                      # Main exports
+│   ├── package.json                  # Contracts package config
+│   ├── README.md                     # Contracts documentation
+│   ├── watchlists.contract.ts        # Watchlists API contract
+│   └── schemas/                      # Zod validation schemas
+│       ├── index.ts                  # Schema exports
+│       └── watchlist.schema.ts       # Watchlist validation
 ├── lambda/
-│   └── index.ts                      # Lambda handler code
+│   ├── index.ts                      # Lambda handler (ts-rest)
+│   ├── router.ts                     # Route aggregation
+│   ├── openapi.ts                    # OpenAPI generator
+│   └── routes/
+│       └── watchlists.routes.ts      # Watchlist handlers
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml                # CI/CD deployment workflow
 ├── docs/
 │   └── DEPLOY.md                     # Deployment and CI/CD guide
+├── openapi.json                      # Generated OpenAPI spec
 ├── README.md                         # Project overview (this file)
 ├── cdk.json                          # CDK configuration
 ├── tsconfig.json                     # TypeScript configuration
@@ -136,9 +149,34 @@ For detailed deployment instructions, CI/CD setup, and troubleshooting, see **[d
 
 ### Modifying Lambda Code
 
-1. Edit `lambda/index.ts`
+1. Edit `lambda/index.ts` or route handlers in `lambda/routes/`
 2. Run `npm run build` to compile
 3. Run `npm run deploy` to update the function
+
+### Modifying API Contracts
+
+1. Edit contracts in `contracts/` or schemas in `contracts/schemas/`
+2. Run `npm run build` to compile
+3. Run `npm run openapi` to regenerate OpenAPI spec
+4. The entire `contracts/` directory is a self-contained shareable package
+
+**Sharing contracts with frontend:**
+```bash
+# In frontend project
+npm install ../worthwatch-backend/contracts
+```
+
+```typescript
+// Frontend usage
+import { initClient } from '@ts-rest/core';
+import { watchlistsContract } from '@worthwatch/contracts';
+
+const client = initClient(watchlistsContract, {
+  baseUrl: 'https://api.worthwatch.com'
+});
+
+const watchlists = await client.listWatchlists();
+```
 
 ## Cleanup
 
