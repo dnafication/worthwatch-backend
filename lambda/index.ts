@@ -5,7 +5,15 @@ import {
 } from 'aws-lambda';
 import { createLambdaHandler } from '@ts-rest/serverless/aws';
 import { apiContract, apiRoutes } from './router';
-import { verifyToken, isPublicRoute } from './middleware/auth.middleware';
+
+/**
+ * User information from JWT authorizer context
+ */
+export interface AuthorizedUser {
+  sub: string; // User ID from Cognito
+  email?: string;
+  'cognito:username'?: string;
+}
 
 /**
  * ts-rest Lambda Handler
@@ -20,7 +28,8 @@ const tsRestHandler = createLambdaHandler(apiContract, apiRoutes, {
 
 /**
  * Main Lambda handler
- * Wraps ts-rest handler with authentication and error handling
+ * JWT verification is done by API Gateway JWT Authorizer.
+ * User information is extracted from the authorizer context.
  */
 export const handler = async (
   event: APIGatewayProxyEvent,
@@ -30,33 +39,23 @@ export const handler = async (
   console.log('Context:', JSON.stringify(context, null, 2));
 
   try {
-    const path = event.path || '/';
-    const method = event.httpMethod || 'GET';
-
-    // Check if route is public
-    if (!isPublicRoute(path, method)) {
-      // Protected route - verify JWT token
-      try {
-        const tokenPayload = await verifyToken(event);
-        console.log('Authenticated user:', tokenPayload.sub);
-
-        // Add user info to event for downstream handlers
-        (event as any).user = tokenPayload;
-      } catch (authError) {
-        console.error('Authentication error:', authError);
-        return {
-          statusCode: 401,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            error: 'Unauthorized',
-            message: authError instanceof Error ? authError.message : 'Authentication failed',
-          }),
-        };
-      }
+    // Extract user information from authorizer context (if present)
+    // API Gateway JWT Authorizer populates this for protected routes
+    const claims = event.requestContext?.authorizer?.jwt?.claims;
+    
+    if (claims) {
+      const user: AuthorizedUser = {
+        sub: claims.sub as string,
+        email: claims.email as string,
+        'cognito:username': claims['cognito:username'] as string,
+      };
+      
+      console.log('Authenticated user:', user.sub);
+      
+      // Attach user info to event for downstream handlers
+      (event as any).user = user;
     } else {
-      console.log('Public route - skipping authentication');
+      console.log('Public route - no user context');
     }
 
     // Delegate to ts-rest handler
