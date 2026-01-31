@@ -44,12 +44,6 @@ export class WorthWatchStack extends cdk.Stack {
         userSrp: true,
         custom: true,
       },
-      oAuth: {
-        flows: {
-          authorizationCodeGrant: false,
-          implicitCodeGrant: false,
-        },
-      },
       generateSecret: false, // Public client (web/mobile apps)
     });
     const nodejsLambda = new NodejsFunction(this, 'ApiLambda', {
