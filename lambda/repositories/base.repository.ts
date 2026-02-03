@@ -1,5 +1,8 @@
 /**
  * Base DynamoDB repository with common CRUD operations
+ *
+ * Note: Uses Node.js crypto.randomUUID which requires Node.js 14.17.0+
+ * The Lambda runtime is configured for Node.js 24.x which fully supports this.
  */
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {

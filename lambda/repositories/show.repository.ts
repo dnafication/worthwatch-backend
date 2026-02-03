@@ -52,12 +52,14 @@ export class ShowRepository extends BaseRepository<Show> {
 
   /**
    * Search shows by title (partial match)
+   * Note: This requires a GSI with title as sort key for efficient queries.
+   * Current implementation uses FilterExpression which performs a scan.
    */
   async searchByTitle(titleQuery: string, limit?: number): Promise<Show[]> {
-    const command = new QueryCommand({
+    const { ScanCommand } = await import('@aws-sdk/lib-dynamodb');
+    const command = new ScanCommand({
       TableName: this.tableName,
-      IndexName: 'TitleIndex', // Assumes GSI on title field
-      KeyConditionExpression: 'begins_with(title, :title)',
+      FilterExpression: 'begins_with(title, :title)',
       ExpressionAttributeValues: {
         ':title': titleQuery,
       },
@@ -70,9 +72,12 @@ export class ShowRepository extends BaseRepository<Show> {
 
   /**
    * Find shows by genre
+   * Note: This uses FilterExpression which performs a scan.
+   * For production, consider creating a GSI with genre as partition key.
    */
   async findByGenre(genre: string, limit?: number): Promise<Show[]> {
-    const command = new QueryCommand({
+    const { ScanCommand } = await import('@aws-sdk/lib-dynamodb');
+    const command = new ScanCommand({
       TableName: this.tableName,
       FilterExpression: 'contains(genres, :genre)',
       ExpressionAttributeValues: {

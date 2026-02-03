@@ -22,6 +22,7 @@ export class LikeRepository extends BaseRepository<Like> {
    * Create a like with composite key
    */
   async createLike(userId: string, watchlistId: string): Promise<Like> {
+    const { PutCommand } = await import('@aws-sdk/lib-dynamodb');
     const now = this.getTimestamp();
     const like: Like = {
       id: `USER#${userId}#LIKE#WATCHLIST#${watchlistId}`,
@@ -31,12 +32,12 @@ export class LikeRepository extends BaseRepository<Like> {
       updatedAt: now,
     };
 
-    const command = {
+    const command = new PutCommand({
       TableName: this.tableName,
       Item: like,
-    };
+    });
 
-    await docClient.send({ ...command } as any);
+    await docClient.send(command);
     return like;
   }
 

@@ -50,12 +50,13 @@ export class WatchlistRepository extends BaseRepository<Watchlist> {
 
   /**
    * Find watchlists by tag
+   * Note: This uses FilterExpression which performs a scan operation.
+   * For production, consider creating a separate tag mapping table or GSI.
    */
   async findByTag(tag: string, limit?: number): Promise<Watchlist[]> {
     const command = new QueryCommand({
       TableName: this.tableName,
-      IndexName: 'TagIndex', // Assumes GSI on tags field
-      KeyConditionExpression: 'contains(tags, :tag)',
+      FilterExpression: 'contains(tags, :tag)',
       ExpressionAttributeValues: {
         ':tag': tag,
       },
@@ -67,23 +68,50 @@ export class WatchlistRepository extends BaseRepository<Watchlist> {
   }
 
   /**
-   * Increment view count
+   * Increment view count (atomic operation)
    */
   async incrementViewCount(id: string): Promise<void> {
-    await this.update(id, { viewCount: 1 } as any); // Simplified - should use ADD operation
+    const { UpdateCommand } = await import('@aws-sdk/lib-dynamodb');
+    const command = new UpdateCommand({
+      TableName: this.tableName,
+      Key: { id },
+      UpdateExpression: 'ADD viewCount :inc',
+      ExpressionAttributeValues: {
+        ':inc': 1,
+      },
+    });
+    await docClient.send(command);
   }
 
   /**
-   * Increment like count
+   * Increment like count (atomic operation)
    */
   async incrementLikeCount(id: string): Promise<void> {
-    await this.update(id, { likeCount: 1 } as any); // Simplified - should use ADD operation
+    const { UpdateCommand } = await import('@aws-sdk/lib-dynamodb');
+    const command = new UpdateCommand({
+      TableName: this.tableName,
+      Key: { id },
+      UpdateExpression: 'ADD likeCount :inc',
+      ExpressionAttributeValues: {
+        ':inc': 1,
+      },
+    });
+    await docClient.send(command);
   }
 
   /**
-   * Decrement like count
+   * Decrement like count (atomic operation)
    */
   async decrementLikeCount(id: string): Promise<void> {
-    await this.update(id, { likeCount: -1 } as any); // Simplified - should use ADD operation
+    const { UpdateCommand } = await import('@aws-sdk/lib-dynamodb');
+    const command = new UpdateCommand({
+      TableName: this.tableName,
+      Key: { id },
+      UpdateExpression: 'ADD likeCount :dec',
+      ExpressionAttributeValues: {
+        ':dec': -1,
+      },
+    });
+    await docClient.send(command);
   }
 }

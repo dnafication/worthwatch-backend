@@ -79,11 +79,25 @@ export class WatchlistItemRepository extends BaseRepository<WatchlistItem> {
 
   /**
    * Reorder items in a watchlist
+   * Note: In production, consider using batch operations for better performance
    */
   async reorder(items: Array<{ id: string; order: number }>): Promise<void> {
     // In production, this should use batch operations
+    const { UpdateCommand } = await import('@aws-sdk/lib-dynamodb');
     for (const item of items) {
-      await this.update(item.id, { order: item.order } as any);
+      const command = new UpdateCommand({
+        TableName: this.tableName,
+        Key: { id: item.id },
+        UpdateExpression: 'SET #order = :order, updatedAt = :updatedAt',
+        ExpressionAttributeNames: {
+          '#order': 'order',
+        },
+        ExpressionAttributeValues: {
+          ':order': item.order,
+          ':updatedAt': new Date().toISOString(),
+        },
+      });
+      await docClient.send(command);
     }
   }
 }
