@@ -15,6 +15,7 @@ export interface Watchlist {
   description?: string;
   coverImageUrl?: string;
   isPublic: boolean;
+  isPublicStr: string; // String representation for GSI3 ('true' or 'false')
   tags: string[];
   itemCount: number;
 

@@ -20,6 +20,7 @@ export class WatchlistRepository extends BaseRepository {
    */
   async createWatchlist(input: CreateWatchlistInput): Promise<Watchlist> {
     const timestamp = this.getCurrentTimestamp();
+    const isPublic = input.isPublic ?? true;
 
     const watchlist: Watchlist = {
       PK: getWatchlistPK(input.watchlistId),
@@ -30,7 +31,8 @@ export class WatchlistRepository extends BaseRepository {
       title: input.title,
       description: input.description,
       coverImageUrl: input.coverImageUrl,
-      isPublic: input.isPublic ?? true,
+      isPublic: isPublic,
+      isPublicStr: isPublic.toString(), // Store string version for GSI3
       tags: input.tags || [],
       itemCount: 0,
       createdAt: timestamp,
@@ -119,9 +121,11 @@ export class WatchlistRepository extends BaseRepository {
     }
 
     if (input.isPublic !== undefined) {
-      updateParts.push('#isPublic = :isPublic');
+      updateParts.push('#isPublic = :isPublic, #isPublicStr = :isPublicStr');
       attributeNames['#isPublic'] = 'isPublic';
+      attributeNames['#isPublicStr'] = 'isPublicStr';
       attributeValues[':isPublic'] = input.isPublic;
+      attributeValues[':isPublicStr'] = input.isPublic.toString(); // Update string version for GSI3
     }
 
     if (input.tags !== undefined) {

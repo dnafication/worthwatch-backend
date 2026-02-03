@@ -75,7 +75,7 @@ export class WorthWatchStack extends cdk.Stack {
     lambdaToDynamoDB.dynamoTable.addGlobalSecondaryIndex({
       indexName: 'GSI3',
       partitionKey: {
-        name: 'isPublic',
+        name: 'isPublicStr',
         type: dynamodb.AttributeType.STRING,
       },
       sortKey: {

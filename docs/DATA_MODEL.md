@@ -64,6 +64,7 @@ Represents a curated collection of movies/shows created by a curator.
 - `description`: Watchlist description
 - `coverImageUrl`: Optional cover image
 - `isPublic`: Boolean (default: true)
+- `isPublicStr`: String representation of isPublic ('true' or 'false') for GSI3
 - `tags`: Array of tags/categories
 - `itemCount`: Number of items in the watchlist (denormalized)
 - `createdAt`: ISO 8601 timestamp
@@ -72,7 +73,7 @@ Represents a curated collection of movies/shows created by a curator.
 **Access Patterns:**
 - Get watchlist by ID: Query `PK = WATCHLIST#<watchlistId>` AND `SK = METADATA`
 - Get watchlists by curator: GSI on curatorId (GSI2)
-- List all public watchlists: GSI on isPublic + createdAt (GSI3)
+- List all public watchlists: GSI on isPublicStr + createdAt (GSI3)
 
 ### 3. Watchlist Items (Movie/Show references)
 
@@ -164,10 +165,11 @@ Represents a TV show/series in the platform.
 - **Projection**: ALL
 
 ### GSI3: Public Watchlists Index
-- **Partition Key**: `isPublic`
+- **Partition Key**: `isPublicStr` (string representation: 'true' or 'false')
 - **Sort Key**: `createdAt`
 - **Purpose**: List all public watchlists, sorted by creation date (for discovery)
 - **Projection**: ALL
+- **Note**: We use a string representation because DynamoDB GSIs work better with string partition keys
 
 ### GSI4: Entity Type Index (Optional)
 - **Partition Key**: `entityType`
@@ -302,6 +304,7 @@ lambda/
   "title": "Best Sci-Fi Movies of 2025",
   "description": "A curated list of must-watch science fiction films",
   "isPublic": true,
+  "isPublicStr": "true",
   "tags": ["sci-fi", "2025", "must-watch"],
   "itemCount": 10,
   "createdAt": "2026-01-20T14:00:00Z",
