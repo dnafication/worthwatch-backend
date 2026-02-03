@@ -80,7 +80,10 @@ export abstract class BaseRepository<T extends BaseEntity> {
   /**
    * Update an existing item
    */
-  async update(id: string, updates: Partial<Omit<T, keyof BaseEntity>>): Promise<T | null> {
+  async update(
+    id: string,
+    updates: Partial<Omit<T, keyof BaseEntity>>
+  ): Promise<T | null> {
     // Build update expression
     const updateExpressionParts: string[] = [];
     const expressionAttributeNames: Record<string, string> = {};

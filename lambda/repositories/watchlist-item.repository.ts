@@ -13,7 +13,10 @@ export class WatchlistItemRepository extends BaseRepository<WatchlistItem> {
   /**
    * Find all items in a watchlist
    */
-  async findByWatchlistId(watchlistId: string, limit?: number): Promise<WatchlistItem[]> {
+  async findByWatchlistId(
+    watchlistId: string,
+    limit?: number
+  ): Promise<WatchlistItem[]> {
     const command = new QueryCommand({
       TableName: this.tableName,
       IndexName: 'WatchlistIdIndex', // Assumes GSI on watchlistId field
@@ -26,7 +29,7 @@ export class WatchlistItemRepository extends BaseRepository<WatchlistItem> {
 
     const result = await docClient.send(command);
     const items = (result.Items || []) as WatchlistItem[];
-    
+
     // Sort by order
     return items.sort((a, b) => a.order - b.order);
   }
@@ -51,7 +54,9 @@ export class WatchlistItemRepository extends BaseRepository<WatchlistItem> {
     });
 
     const result = await docClient.send(command);
-    return result.Items && result.Items.length > 0 ? (result.Items[0] as WatchlistItem) : null;
+    return result.Items && result.Items.length > 0
+      ? (result.Items[0] as WatchlistItem)
+      : null;
   }
 
   /**

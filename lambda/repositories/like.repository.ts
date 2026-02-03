@@ -70,7 +70,10 @@ export class LikeRepository extends BaseRepository<Like> {
   /**
    * Get all likes for a watchlist
    */
-  async findByWatchlistId(watchlistId: string, limit?: number): Promise<Like[]> {
+  async findByWatchlistId(
+    watchlistId: string,
+    limit?: number
+  ): Promise<Like[]> {
     const command = new QueryCommand({
       TableName: this.tableName,
       IndexName: 'WatchlistIdIndex', // Assumes GSI on watchlistId field

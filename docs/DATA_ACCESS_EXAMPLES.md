@@ -253,10 +253,10 @@ if (result.success) {
 ### Creating a Complete Watchlist with Items
 
 ```typescript
-import { 
-  WatchlistRepository, 
+import {
+  WatchlistRepository,
   WatchlistItemRepository,
-  MovieRepository 
+  MovieRepository,
 } from './repositories';
 
 async function createWatchlistWithItems(

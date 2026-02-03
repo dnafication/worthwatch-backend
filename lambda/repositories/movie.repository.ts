@@ -25,7 +25,9 @@ export class MovieRepository extends BaseRepository<Movie> {
     });
 
     const result = await docClient.send(command);
-    return result.Items && result.Items.length > 0 ? (result.Items[0] as Movie) : null;
+    return result.Items && result.Items.length > 0
+      ? (result.Items[0] as Movie)
+      : null;
   }
 
   /**
@@ -43,7 +45,9 @@ export class MovieRepository extends BaseRepository<Movie> {
     });
 
     const result = await docClient.send(command);
-    return result.Items && result.Items.length > 0 ? (result.Items[0] as Movie) : null;
+    return result.Items && result.Items.length > 0
+      ? (result.Items[0] as Movie)
+      : null;
   }
 
   /**

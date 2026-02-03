@@ -25,7 +25,9 @@ export class ShowRepository extends BaseRepository<Show> {
     });
 
     const result = await docClient.send(command);
-    return result.Items && result.Items.length > 0 ? (result.Items[0] as Show) : null;
+    return result.Items && result.Items.length > 0
+      ? (result.Items[0] as Show)
+      : null;
   }
 
   /**
@@ -43,7 +45,9 @@ export class ShowRepository extends BaseRepository<Show> {
     });
 
     const result = await docClient.send(command);
-    return result.Items && result.Items.length > 0 ? (result.Items[0] as Show) : null;
+    return result.Items && result.Items.length > 0
+      ? (result.Items[0] as Show)
+      : null;
   }
 
   /**

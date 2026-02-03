@@ -25,7 +25,9 @@ export class UserRepository extends BaseRepository<User> {
     });
 
     const result = await docClient.send(command);
-    return result.Items && result.Items.length > 0 ? (result.Items[0] as User) : null;
+    return result.Items && result.Items.length > 0
+      ? (result.Items[0] as User)
+      : null;
   }
 
   /**
@@ -43,7 +45,9 @@ export class UserRepository extends BaseRepository<User> {
     });
 
     const result = await docClient.send(command);
-    return result.Items && result.Items.length > 0 ? (result.Items[0] as User) : null;
+    return result.Items && result.Items.length > 0
+      ? (result.Items[0] as User)
+      : null;
   }
 
   /**
