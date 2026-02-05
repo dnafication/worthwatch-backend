@@ -7,7 +7,8 @@ WorthWatch is a spec-driven, cloud-native platform designed to help users make c
 The backend is implemented using:
 
 - **AWS CDK** - Infrastructure as Code for reproducible deployments
-- **API Gateway (HTTP APIs)** - Low-latency REST API entry point
+- **API Gateway (HTTP APIs)** - Low-latency REST API entry point with JWT authorization
+- **AWS Cognito** - User authentication and identity management
 - **AWS Lambda** - Serverless compute with Node.js 24.x runtime
 - **Amazon DynamoDB** - NoSQL database for scalable data storage
 - **TypeScript** - Type-safe development throughout the stack
@@ -42,19 +43,22 @@ For detailed deployment instructions, CI/CD setup, and troubleshooting, see **[d
 
 ### Testing the API
 
-Once deployed, test the hello endpoint:
+Once deployed, test the public health endpoint:
 
 ```bash
-curl https://<api-gateway-url>/hello
+curl https://<api-gateway-url>/health
 ```
 
 Expected response:
 
 ```json
 {
-  "message": "hello"
+  "status": "ok",
+  "timestamp": "2024-01-31T03:30:00.000Z"
 }
 ```
+
+For authenticated endpoints, you'll need a valid JWT token from Cognito. See [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md) for details.
 
 ## Project Structure
 
@@ -86,6 +90,14 @@ This project deploys one CDK stack:
 Main application infrastructure including API Gateway, Lambda, and DynamoDB.
 
 ## Infrastructure Details
+
+### Authentication
+
+- **Type**: AWS Cognito User Pool with passwordless support
+- **JWT Verification**: Done by API Gateway JWT Authorizer
+- **Public endpoints**: `/health`, `/ping` - no authentication required
+- **Protected endpoints**: `/watchlists/*` - require valid JWT token
+- See [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md) for complete guide
 
 ### API Gateway
 
@@ -164,9 +176,10 @@ See **[docs/DEPLOY.md](docs/DEPLOY.md)**
 
 ## Next Steps
 
+- Configure Cognito for passwordless authentication flows (OTP, Magic Link)
 - Integrate OpenAPI specifications for API contract validation
-- Add Amazon Cognito for authentication
 - Implement business logic endpoints (watchlists, curators, ratings)
+- Add user profile management endpoints
 
 ## License
 
