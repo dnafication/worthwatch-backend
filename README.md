@@ -63,13 +63,23 @@ Expected response:
 ├── bin/
 │   └── app.ts                        # CDK app entry point
 ├── lib/
-│   ├── worthwatch-stack.ts           # Main application infrastructure
+│   └── worthwatch-stack.ts           # Main application infrastructure
 ├── lambda/
-│   └── index.ts                      # Lambda handler
-├── .github/
-│   └── workflows/
-│       └── deploy.yml                # CI/CD deployment workflow
+│   ├── index.ts                      # Lambda handler
+│   ├── models/                       # Data models (User, Watchlist, Movie, Show)
+│   │   ├── user.model.ts
+│   │   ├── watchlist.model.ts
+│   │   ├── movie.model.ts
+│   │   └── show.model.ts
+│   ├── repositories/                 # Data access layer
+│   │   ├── base.repository.ts
+│   │   ├── user.repository.ts
+│   │   ├── watchlist.repository.ts
+│   │   ├── movie.repository.ts
+│   │   └── show.repository.ts
+│   └── routes/                       # API route handlers
 ├── docs/
+│   ├── DATA_MODEL.md                 # Comprehensive data model documentation
 │   └── DEPLOY.md                     # Deployment and CI/CD guide
 ├── README.md                         # Project overview (this file)
 ├── cdk.json                          # CDK configuration
@@ -101,10 +111,20 @@ Main application infrastructure including API Gateway, Lambda, and DynamoDB.
 
 ### DynamoDB Table
 
-- **Partition Key**: `id` (String)
+- **Design**: Single-table design with multiple entity types
+- **Partition Key**: `PK` (String) - Entity type + ID (e.g., `USER#123`, `WATCHLIST#456`)
+- **Sort Key**: `SK` (String) - Relationship or metadata (e.g., `PROFILE`, `ITEM#MOVIE#789`)
+- **Entities**: User, Watchlist, Movie, Show
+- **Global Secondary Indexes**: 4 GSIs for efficient querying
+  - GSI1: Email lookup for users
+  - GSI2: Watchlists by curator
+  - GSI3: Public watchlists discovery
+  - GSI4: Entity type queries
 - **Billing**: On-demand (pay-per-request)
 - **Encryption**: AWS managed keys
 - **Backups**: Point-in-time recovery configurable
+
+For detailed data model documentation, see [docs/DATA_MODEL.md](docs/DATA_MODEL.md).
 
 ## Development
 

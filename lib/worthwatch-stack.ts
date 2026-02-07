@@ -31,13 +31,72 @@ export class WorthWatchStack extends cdk.Stack {
       existingLambdaObj: nodejsLambda,
       dynamoTableProps: {
         partitionKey: {
-          name: 'id',
+          name: 'PK',
+          type: dynamodb.AttributeType.STRING,
+        },
+        sortKey: {
+          name: 'SK',
           type: dynamodb.AttributeType.STRING,
         },
         billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
         encryption: dynamodb.TableEncryption.AWS_MANAGED,
         removalPolicy: cdk.RemovalPolicy.DESTROY, // For development - change for production
+        pointInTimeRecovery: false, // Enable for production
       },
+    });
+
+    // Add Global Secondary Indexes (GSIs)
+    
+    // GSI1: Email Index - for looking up users by email
+    lambdaToDynamoDB.dynamoTable.addGlobalSecondaryIndex({
+      indexName: 'GSI1',
+      partitionKey: {
+        name: 'email',
+        type: dynamodb.AttributeType.STRING,
+      },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
+    // GSI2: Curator Watchlists Index - for getting watchlists by curator
+    lambdaToDynamoDB.dynamoTable.addGlobalSecondaryIndex({
+      indexName: 'GSI2',
+      partitionKey: {
+        name: 'curatorId',
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'createdAt',
+        type: dynamodb.AttributeType.STRING,
+      },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
+    // GSI3: Public Watchlists Index - for listing public watchlists
+    lambdaToDynamoDB.dynamoTable.addGlobalSecondaryIndex({
+      indexName: 'GSI3',
+      partitionKey: {
+        name: 'isPublicStr',
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'createdAt',
+        type: dynamodb.AttributeType.STRING,
+      },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
+    // GSI4: Entity Type Index - for querying by entity type
+    lambdaToDynamoDB.dynamoTable.addGlobalSecondaryIndex({
+      indexName: 'GSI4',
+      partitionKey: {
+        name: 'entityType',
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'createdAt',
+        type: dynamodb.AttributeType.STRING,
+      },
+      projectionType: dynamodb.ProjectionType.KEYS_ONLY,
     });
 
     // Create CloudWatch Log Group for API Gateway
