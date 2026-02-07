@@ -5,6 +5,7 @@ This guide explains how to run and test the WorthWatch API locally using AWS SAM
 ## Overview
 
 The local development setup uses:
+
 - **AWS SAM CLI** - Runs Lambda functions locally in Docker containers
 - **API Gateway Emulation** - Local HTTP server that mimics API Gateway
 - **Real AWS DynamoDB** - Connects to your deployed DynamoDB table (no local DB needed)
@@ -36,6 +37,7 @@ docker ps
 ```
 
 If not installed:
+
 - **macOS**: [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop)
 - **Linux**: Follow [Docker Engine installation](https://docs.docker.com/engine/install/)
 - **Windows**: [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop)
@@ -53,6 +55,7 @@ aws sts get-caller-identity
 ```
 
 Alternatively, use a named profile:
+
 ```bash
 export AWS_PROFILE=worthwatch
 ```
@@ -89,6 +92,7 @@ cp .env.local.example .env.local
 ```
 
 Edit `.env.local` and set:
+
 ```bash
 DDB_TABLE_NAME=your-table-name-here
 AWS_REGION=us-east-1
@@ -106,12 +110,14 @@ npm run dev
 ```
 
 This command:
+
 1. Compiles TypeScript (`npm run build`)
 2. Synthesizes CDK template (`npm run synth`)
 3. Starts SAM Local API on `http://localhost:3000`
 4. Uses warm containers for faster reloads
 
 You'll see output like:
+
 ```
 Mounting ApiLambdaDynamoDBLambdaFunction26DAE23A at http://127.0.0.1:3000/ [GET, POST, PUT, DELETE, OPTIONS]
 Mounting ApiLambdaDynamoDBLambdaFunction26DAE23A at http://127.0.0.1:3000/{proxy+} [GET, POST, PUT, DELETE, OPTIONS]
@@ -150,15 +156,17 @@ npm run local:invoke
 ### Iterative Development
 
 1. **Terminal 1 - Start server:**
+
    ```bash
    npm run dev
    ```
 
 2. **Terminal 2 - Edit and rebuild:**
+
    ```bash
    # Make changes to lambda/index.ts or lambda/routes/*.ts
    npm run build
-   
+
    # SAM will automatically reload the changes
    ```
 
@@ -170,6 +178,7 @@ npm run local:invoke
 ### Hot Reload
 
 SAM Local supports warm containers, which means:
+
 - First request may be slow (cold start)
 - Subsequent requests are fast
 - When you rebuild, SAM detects changes and reloads
@@ -219,6 +228,7 @@ Available scripts in `package.json`:
 **Error:** `command not found: sam`
 
 **Solution:**
+
 ```bash
 # macOS
 brew install aws-sam-cli
@@ -232,6 +242,7 @@ brew install aws-sam-cli
 **Error:** `Cannot connect to the Docker daemon`
 
 **Solution:**
+
 ```bash
 # Start Docker Desktop or Docker daemon
 # Verify with:
@@ -243,17 +254,21 @@ docker ps
 **Error:** `ResourceNotFoundException: Requested resource not found`
 
 **Solution:**
+
 1. Verify AWS credentials:
+
    ```bash
    aws sts get-caller-identity
    ```
 
 2. Check table exists:
+
    ```bash
    aws dynamodb list-tables
    ```
 
 3. Ensure correct region:
+
    ```bash
    export AWS_REGION=us-east-1
    ```
@@ -265,12 +280,15 @@ docker ps
 **Problem:** Changes to Lambda code don't appear
 
 **Solution:**
+
 1. Rebuild TypeScript:
+
    ```bash
    npm run build
    ```
 
 2. Restart SAM:
+
    ```bash
    # Stop with Ctrl+C, then:
    npm run dev
@@ -283,6 +301,7 @@ docker ps
 **Error:** `Address already in use`
 
 **Solution:**
+
 ```bash
 # Use a different port
 sam local start-api --port 3001
@@ -293,6 +312,7 @@ sam local start-api --port 3001
 **Error:** `Template file not found`
 
 **Solution:**
+
 ```bash
 # Synthesize CDK template
 npm run synth
@@ -308,6 +328,7 @@ ls -la cdk.out/WorthWatchStack.template.json
 **Solution:**
 
 Check that:
+
 1. TypeScript is compiled: `npm run build`
 2. `dist/lambda/index.js` exists
 3. Handler path in template is correct: `index.handler`
@@ -328,6 +349,7 @@ Cors:
 ### 1. Use Warm Containers
 
 Always use `--warm-containers EAGER` for development (already in `npm run dev`):
+
 ```bash
 sam local start-api --warm-containers EAGER
 ```
@@ -335,6 +357,7 @@ sam local start-api --warm-containers EAGER
 ### 2. Use Watch Mode
 
 For fastest iteration, keep TypeScript in watch mode:
+
 ```bash
 npm run watch  # Terminal 1
 npm run local:start  # Terminal 2
@@ -355,6 +378,7 @@ DDB_TABLE_NAME=WorthWatchStack-Dev-Table npm run dev
 ### 4. Check Lambda Logs
 
 SAM Local outputs Lambda logs to console. Look for:
+
 - Initialization errors
 - Runtime errors
 - Your console.log statements
@@ -362,6 +386,7 @@ SAM Local outputs Lambda logs to console. Look for:
 ### 5. Test Before Deploying
 
 Always test locally before deploying:
+
 ```bash
 # Local testing
 npm run dev
@@ -421,14 +446,16 @@ sam local start-api \
 If you prefer not to use the deployed table:
 
 1. Run DynamoDB Local:
+
    ```bash
    docker run -p 8000:8000 amazon/dynamodb-local
    ```
 
 2. Override endpoint in Lambda code:
+
    ```typescript
    const ddb = new DynamoDBClient({
-     endpoint: process.env.LOCAL_DYNAMODB_ENDPOINT || undefined
+     endpoint: process.env.LOCAL_DYNAMODB_ENDPOINT || undefined,
    });
    ```
 
